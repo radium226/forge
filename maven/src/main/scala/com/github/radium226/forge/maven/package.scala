@@ -23,6 +23,8 @@ package object maven {
 
   type MavenCoordinates = (GroupID, ArtifactID, Version)
 
+  type User = String
+
   implicit def pathToFile(path: Path) = {
     path.toFile()
   }

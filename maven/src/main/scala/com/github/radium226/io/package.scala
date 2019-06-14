@@ -43,10 +43,7 @@ package object io {
   }
 
   def makeParentFolder[F[_]](filePath: Path)(implicit F: Sync[F]): F[Unit] = {
-    F.delay({
-      println(s"filePath.getParent=${filePath.getParent}")
-      Files.createDirectories(filePath.getParent)
-    })
+    F.delay(Files.createDirectories(filePath.getParent))
   }
 
   def fileAttributes[F[_]](filePath: Path)(implicit F: Sync[F]): F[BasicFileAttributes] = {

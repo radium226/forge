@@ -3,7 +3,7 @@ SHELL=/bin/bash
 .ONESHELL:
 
 PORT := 1234
-REPOSITORY_URL := http://localhost:$(PORT)
+REPOSITORY_URL := http://localhost:$(PORT)/maven2
 FOLDER_PATH := $(shell mktemp -d)
 
 .PHONY: e2e-test

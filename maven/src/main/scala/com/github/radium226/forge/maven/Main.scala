@@ -1,27 +1,18 @@
 package com.github.radium226.forge.maven
 
-import cats._
-import cats.data._
-import cats.implicits._
-import cats.effect.concurrent._
+import java.nio.file.Path
+
 import cats.effect._
+import com.github.radium226.io._
+import fs2._
 import org.http4s._
-import org.http4s.dsl.io.{Path => Http4sPath}
 import org.http4s.dsl.io._
+import org.http4s.implicits._
 import org.http4s.server._
 import org.http4s.server.blaze._
-import org.http4s.implicits._
 import scopt._
-import java.nio.file.{Files, Path, Paths}
-import java.util.stream.Collectors
 
 import scala.concurrent.ExecutionContext
-import scala.util.matching.Regex
-import scala.collection.JavaConverters._
-
-import com.github.radium226.io._
-
-import fs2._
 
 object Main extends IOApp {
 
@@ -69,54 +60,8 @@ object Main extends IOApp {
     upload(request.body, filePath)
   }
 
-  case class AbsoluteFilePathVar(parentFolderPath: Path) {
-
-    def unapply(path: Http4sPath): Option[Path] = {
-      path.toPathOption.map(parentFolderPath.resolve(_))
-    }
-
-  }
-
-  case class MavenMetadataVar(rootFolderPath: Path) {
-
-    def unapply(path: Http4sPath): Option[Path] = {
-      val segments = path.toList
-      segments.lastOption match {
-        case Some("maven-metadata.xml") =>
-          segments
-            .dropRight(1)
-            .toPathOption
-            .map(rootFolderPath.resolve)
-
-        case _ =>
-          None
-      }
-    }
-
-  }
-
-  def locatePOMFile(artifactFolderPath: Path): IO[Path] = {
-    locateFiles[IO](artifactFolderPath, "\\.pom$".r)
-      .map(_.headOption)
-      .flatMap({
-        case Some(pomFilePath) =>
-          IO.pure(pomFilePath)
-
-        case None =>
-          IO.raiseError(new Exception(s"Unable to locate a POM file in ${artifactFolderPath}"))
-      })
-  }
-
-  def peekGroupIDAndArtifactID(artifactFolderPath: Path): IO[(GroupID, ArtifactID)] = {
-    for {
-      pomFilePath <- locatePOMFile(artifactFolderPath)
-      pom         <- POM.read[IO](pomFilePath)
-    } yield (pom.groupID, pom.artifactID)
-  }
-
   def makeRoutes(port: Port, rootFolderPath: Path): HttpRoutes[IO] = {
     val filePathVar = AbsoluteFilePathVar(rootFolderPath)
-    val mavenMetadataVar = MavenMetadataVar(rootFolderPath)
 
     val service = HttpRoutes.of[IO] {
       case request @ PUT -> filePathVar(filePath) =>
@@ -124,19 +69,6 @@ object Main extends IOApp {
           _        <- upload(request, filePath)
           response <- Ok(())
         } yield response
-
-      /*case request @ GET -> mavenMetadataVar(artifactFolderPath) =>
-        val response = for {
-          mavenMetadata <- MavenMetadata.generate[IO](artifactFolderPath)
-          xml           <- MavenMetadata.write[IO](mavenMetadata)
-          response      <- Ok()
-        } yield response
-
-        response.recoverWith({
-          case throwable =>
-            throwable.printStackTrace()
-            IO.raiseError(throwable)
-        })*/
 
       case request @ GET -> filePathVar(filePath) =>
         IO.delay(filePath.exists()).flatMap({
@@ -147,7 +79,7 @@ object Main extends IOApp {
         })
     }
 
-    val routes = Router("/" -> service)
+    val routes = Router("/maven2" -> service)
     routes
   }
 
