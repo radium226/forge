@@ -13,7 +13,9 @@ e2e-test:
 	java -jar "./maven/target/scala-2.12/maven.jar" --folder="$(FOLDER_PATH)" --port="1234" 2>&1 &
 	trap "kill %1" 0
 	cd "e2e-test/fake"
-	mvn clean deploy \
-		-DaltDeploymentRepository="e2e::default::$(REPOSITORY_URL)"
+	mvn --settings "./settings.xml" \
+	 	clean \
+	 	deploy \
+			-DaltDeploymentRepository="e2e::default::$(REPOSITORY_URL)"
 	cd -
 	find "$(FOLDER_PATH)" -type "f"

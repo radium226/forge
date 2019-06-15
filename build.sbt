@@ -24,13 +24,15 @@ lazy val `maven` = (project in file("maven"))
     libraryDependencies ++= Dependencies.http4s,
     libraryDependencies ++= Dependencies.scopt,
     libraryDependencies ++= Dependencies.xtract,
+    libraryDependencies ++= Dependencies.libpam4j,
     assembly / assemblyJarName := "maven.jar",
     assembly / assemblyMergeStrategy := {
       case "module-info.class" => MergeStrategy.discard
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
-    }
+    },
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8")
   )
   .dependsOn(`commons`)
 

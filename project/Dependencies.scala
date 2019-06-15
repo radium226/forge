@@ -39,14 +39,18 @@ object Dependencies {
   )
 
   lazy val http4s = Seq(
-    "org.http4s" %% "http4s-core" % "0.20.0",
-    "org.http4s" %% "http4s-dsl" % "0.20.0",
-    "org.http4s" %% "http4s-blaze-server" % "0.20.0",
-    "org.http4s" %% "http4s-blaze-client" % "0.20.0"
+    "org.http4s" %% "http4s-core" % "0.20.2",
+    "org.http4s" %% "http4s-dsl" % "0.20.2",
+    "org.http4s" %% "http4s-blaze-server" % "0.20.2",
+    "org.http4s" %% "http4s-blaze-client" % "0.20.2"
   )
 
   lazy val xtract = Seq(
     "com.lucidchart" %% "xtract" % "2.0.1"
+  )
+
+  lazy val libpam4j = Seq(
+    "org.kohsuke" % "libpam4j" % "1.11"
   )
 
 }
