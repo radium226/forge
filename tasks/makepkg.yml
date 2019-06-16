@@ -4,6 +4,7 @@
     path: "/tmp/forge"
     state: absent
   become: yes
+  become_user: "root"
   changed_when: false
 
 - name: create working directory
