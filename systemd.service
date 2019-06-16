@@ -5,4 +5,4 @@ Description=Forge Service
 Type=simple
 User=forge
 Password=forge
-ExecStart=/usr/lib/forge/forged
+ExecStart=/usr/lib/forge/bin/forged

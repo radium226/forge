@@ -1,4 +1,4 @@
-pkgver=r5.c7dbd76
+pkgver=r7.3b7721b
 pkgrel=1
 
 pkgname=("forge-git")
