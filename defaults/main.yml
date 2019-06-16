@@ -1,2 +1,3 @@
 forge_subdomain: "forge"
 forge_domain: "{{ domain }}"
+forge_user: "{{ forge }}"

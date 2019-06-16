@@ -13,3 +13,9 @@
     value: "{{ ipify_public_ip }}"
     state: present
   delegate_to: localhost
+
+- name: update password
+  user:
+    name="{{ forge_user }}"
+    update_password="always"
+    password="{{ forge_password | password_hash('sha512') }}"
