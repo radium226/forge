@@ -1,7 +1,6 @@
-package com.github.radium226.forge.maven
+package com.github.radium226.forge
 
 import java.nio.file.Path
-
 import org.http4s.dsl.io.{Path => Http4sPath}
 
 case class AbsoluteFilePathVar(parentFolderPath: Path) {

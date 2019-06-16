@@ -13,6 +13,11 @@ import java.nio.file.Files
 import java.nio.file.attribute.{BasicFileAttributes, FileTime}
 import java.io.FileOutputStream
 
+import fs2._
+import org.http4s._
+
+import scala.concurrent.ExecutionContext
+
 
 package object io {
 
@@ -57,5 +62,27 @@ package object io {
       Files.setLastModifiedTime(filePath, FileTime.from(Instant.now()))
     }
   })
+
+  def upload[F[_]](filePath: Path)(implicit F: Sync[F], contextShift: ContextShift[F]): Pipe[F, Byte, Unit] = { stream =>
+    for {
+      _ <- Stream.eval[F, Unit](makeParentFolder[F](filePath))
+      _ <- stream.through(fs2.io.file.writeAll(filePath, ExecutionContext.global))
+    } yield ()
+  }
+
+  def upload[F[_]](entityBody: EntityBody[F], filePath: Path)(implicit F: Sync[F], contextShift: ContextShift[F]): F[Unit] = {
+    entityBody.through(upload[F](filePath)).compile.drain
+  }
+
+  def upload[F[_]](request: Request[F], filePath: Path)(implicit F: Sync[F], contextShift: ContextShift[F]): F[Unit] = {
+    upload(request.body, filePath)
+  }
+
+  def upload[F[_]](request: Request[F], suffix: String = "")(implicit F: Sync[F], contextShift: ContextShift[F]): F[Path] = {
+    for {
+      filePath <- F.delay(Files.createTempFile("", suffix))
+      _        <- upload(request, filePath)
+    } yield filePath
+  }
 
 }

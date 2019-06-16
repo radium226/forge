@@ -1,21 +1,22 @@
-package com.github.radium226.forge.maven
+package com.github.radium226.forge
 
 import java.nio.file.Path
 
-import cats._
-import cats.data._
-import cats.implicits._
-import cats.effect._
-import com.github.radium226.io._
-import fs2._
-import org.http4s.{AuthedRoutes, _}
+import cats.data.{Kleisli, OptionT}
+import cats.effect.{ExitCode, IO, IOApp}
+import com.github.radium226.forge._
+import com.github.radium226.forge.maven.Maven
+import com.github.radium226.forge.pacman.Pacman
+import com.github.radium226.io.makeParentFolder
+import fs2.{Pipe, Stream}
 import org.http4s.dsl.io._
-import org.http4s.headers._
+import org.http4s.headers.Authorization
+import org.http4s.server.blaze._
 import org.http4s.implicits._
 import org.http4s.server._
-import org.http4s.server.blaze._
+import org.http4s._
 import org.jvnet.libpam.PAM
-import scopt._
+import scopt.OParser
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try
@@ -29,7 +30,7 @@ object Main extends IOApp {
       header <- OptionT(IO.pure(request.headers.get(Authorization)))
       (user, password) <- OptionT(IO.pure(header.credentials match {
         case BasicCredentials(user, password) =>
-          Some((user, password))
+          Option((user, password))
 
         case _ =>
           None
@@ -38,6 +39,7 @@ object Main extends IOApp {
         val pam = new PAM("forge")
         Try(pam.authenticate(user, password)).map(Some(_)).getOrElse(None)
       }))
+      _        <- if (unixUser.getGroups.contains("forge")) OptionT.some[IO](()) else OptionT.none[IO, Unit]
     } yield unixUser.getUserName
   })
 
@@ -68,42 +70,14 @@ object Main extends IOApp {
     })
   }
 
-  def upload(filePath: Path): Pipe[IO, Byte, Unit] = { stream =>
-    for {
-      _ <- Stream.eval[IO, Unit](makeParentFolder[IO](filePath))
-      _ <- stream.through(fs2.io.file.writeAll(filePath, ExecutionContext.global))
-    } yield ()
-  }
 
-  def upload(entityBody: EntityBody[IO], filePath: Path): IO[Unit] = {
-    entityBody.through(upload(filePath)).compile.drain
-  }
 
-  def upload(request: Request[IO], filePath: Path): IO[Unit] = {
-    upload(request.body, filePath)
-  }
-
-  def makeRoutes(port: Port, rootFolderPath: Path): HttpRoutes[IO] = {
+  def makeRoutes(folderPath: Path): HttpRoutes[IO] = {
     val middleware: AuthMiddleware[IO, User] = AuthMiddleware[IO, User](authUser)
-    val filePathVar = AbsoluteFilePathVar(rootFolderPath)
-
-    val service = AuthedRoutes.of[User, IO] {
-      case (request @ PUT -> filePathVar(filePath)) as user =>
-        for {
-          _        <- upload(request, filePath)
-          response <- Ok(())
-        } yield response
-
-      case request @ GET -> filePathVar(filePath) as user =>
-        IO.delay(filePath.exists()).flatMap({
-          case true =>
-            Ok(fs2.io.file.readAll[IO](filePath, ExecutionContext.global, ChunkSize))
-          case false =>
-            NotFound()
-        })
-    }
-
-    val routes = Router("/maven2" -> middleware(service))
+    val routes = Router(
+      "/maven2" -> middleware(Maven.makeRoutes[IO](folderPath.resolve("maven2"))),
+      "/archlinux" -> middleware(Pacman.makeRoutes[IO](folderPath.resolve("archlinux")))
+    )
     routes
   }
 
@@ -111,7 +85,7 @@ object Main extends IOApp {
 
     val server = (for {
       arguments    <- parseArguments(arguments)
-      routes        = makeRoutes(arguments.port, arguments.folderPath)
+      routes        = makeRoutes(arguments.folderPath)
 
       serverBuilder = BlazeServerBuilder[IO]
                         .withHttpApp(routes.orNotFound)

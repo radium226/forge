@@ -1,13 +1,13 @@
-package com.github.radium226.forge
+package com.github.radium226
 
 import java.nio.file.{Path, Paths}
 import org.http4s.dsl.io.{Path => Http4sPath}
 
 import scala.language.implicitConversions
 
-import scopt._
+import scopt.Read
 
-package object maven {
+package object forge {
 
   type Argument = String
 

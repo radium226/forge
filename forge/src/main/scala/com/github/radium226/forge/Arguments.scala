@@ -1,4 +1,4 @@
-package com.github.radium226.forge.maven
+package com.github.radium226.forge
 
 import java.nio.file.{Path, Paths}
 

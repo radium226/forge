@@ -17,7 +17,7 @@ lazy val `commons` = (project in file("commons"))
     name := "commons"
   )
 
-lazy val `maven` = (project in file("maven"))
+lazy val `maven` = (project in file("forge"))
   .settings(
     name := "maven",
     libraryDependencies ++= Dependencies.cats,
