@@ -33,3 +33,14 @@
 - name: install packages
   shell: |
     find "/tmp/forge" -name "*.pkg.tar.xz" -exec yay -U "{}" --noconfirm \;
+
+- name: start service
+  systemd:
+    name: "forge.service"
+    state: started
+    enabled: yes
+
+- name: restart service
+  systemd:
+    name: "forge.service"
+    state: restarted
