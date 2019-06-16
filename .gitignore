@@ -18,7 +18,5 @@ project/plugins/project/
 .idea
 
 # Arch
-/src
-/pkg
 /*.pkg.tar.xz
 /.credentials
