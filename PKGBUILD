@@ -1,12 +1,12 @@
-pkgver="r11.90af915"
-pkgrel="1"
+pkgver=r5.c7dbd76
+pkgrel=1
 
 pkgname=("forge-git")
 
 arch=("any")
 
 pkgver() {
-  cd "scraping"
+  cd "forge"
   printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
 }
 
@@ -20,7 +20,7 @@ depends=(
 )
 
 source=(
-    "git+http://https://github.com/radium226/forge.git"
+    "git+https://github.com/radium226/forge.git"
     "forged"
     "systemd.service"
     "sysusers.conf"
@@ -34,7 +34,7 @@ build() {
 
 package() {
     install -Dm0644 \
-      "${srcdir}/forge/forge/target/scala-2.12/forge.jar" \
+      "${srcdir}/forge/forge/target/scala-2.12/maven.jar" \
       "${pkgdir}/usr/lib/forge/share/forge.jar"
 
     install -Dm0755 \
