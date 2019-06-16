@@ -77,11 +77,11 @@ object Main extends IOApp {
   }
 
   def authenticator: BasicAuthenticator[IO, User] = { case BasicCredentials(user, password) =>
-    val pam = new PAM("forge")
     IO.delay({
+      val pam = new PAM("forge")
       Try(pam.authenticate(user, password))
         .collect({
-          case unixUser if unixUser.getGroups.contains("forge") =>
+          case unixUser =>
             unixUser.getUserName
         })
         .toOption
