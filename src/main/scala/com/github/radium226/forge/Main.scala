@@ -21,7 +21,7 @@ import org.jvnet.libpam.PAM
 import scopt.OParser
 
 import scala.concurrent.ExecutionContext
-import scala.util.Try
+import scala.util._
 
 object Main extends IOApp {
 
@@ -79,12 +79,13 @@ object Main extends IOApp {
   def authenticator: BasicAuthenticator[IO, User] = { case BasicCredentials(user, password) =>
     IO.delay({
       val pam = new PAM("forge")
-      Try(pam.authenticate(user, password))
-        .collect({
-          case unixUser =>
-            unixUser.getUserName
-        })
-        .toOption
+      Try(pam.authenticate(user, password)) match {
+        case Success(unixUser) =>
+          Some(unixUser.getUserName)
+        case Failure(throwable) =>
+          throwable.printStackTrace()
+          None
+      }
     })
   }
 
