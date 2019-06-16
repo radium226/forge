@@ -1,1 +1,2 @@
 forge_subdomain: "forge"
+forge_domain: "{{ domain }}"
