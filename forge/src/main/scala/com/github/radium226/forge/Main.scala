@@ -30,9 +30,11 @@ object Main extends IOApp {
       header <- OptionT(IO.pure(request.headers.get(Authorization)))
       (user, password) <- OptionT(IO.pure(header.credentials match {
         case BasicCredentials(user, password) =>
+          println(s"Trying to auth ${user} using ${password}")
           Option((user, password))
 
         case _ =>
+          println(s"Not even trying to auth")
           None
       }))
       unixUser <- OptionT(IO.delay({

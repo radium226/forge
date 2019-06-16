@@ -12,41 +12,24 @@ ThisBuild / scalacOptions ++= Seq(
   "-language:higherKinds",
   "-Ypartial-unification")
 
-lazy val `commons` = (project in file("commons"))
+lazy val root = (project in file("."))
   .settings(
-    name := "commons"
-  )
-
-lazy val `maven` = (project in file("forge"))
-  .settings(
-    name := "maven",
+    name := "forge",
     libraryDependencies ++= Dependencies.cats,
     libraryDependencies ++= Dependencies.http4s,
     libraryDependencies ++= Dependencies.scopt,
     libraryDependencies ++= Dependencies.xtract,
     libraryDependencies ++= Dependencies.libpam4j,
-    assembly / assemblyJarName := "maven.jar",
+    assembly / assemblyJarName := "forge.jar",
     assembly / assemblyMergeStrategy := {
       case "module-info.class" => MergeStrategy.discard
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
     },
+    publishTo := Some("Forge" at "http://localhost:1234/maven2"),
+    credentials += Credentials(new File(".credentials")),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8")
-  )
-  .dependsOn(`commons`)
-
-lazy val `pacman` = (project in file("pacman"))
-  .settings(
-    name := "pacman"
-  )
-  .dependsOn(`commons`)
-
-lazy val root = (project in file("."))
-  .aggregate(
-    `commons`,
-    `maven`,
-    `pacman`
   )
 
 resolvers += Resolver.sonatypeRepo("releases")
