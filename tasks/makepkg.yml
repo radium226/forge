@@ -1,0 +1,35 @@
+---
+- name: delete old working directory
+  file:
+    path: "/tmp/scraping"
+    state: absent
+  changed_when: false
+
+- name: create working directory
+  file:
+    path: "/tmp/scraping"
+    state: directory
+  changed_when: false
+
+- name: clone git repo
+  git:
+    repo: "ssh://git@gitlab.com/self-hosting/scraping.git"
+    version: "arch-package"
+    dest: "/tmp/scraping"
+
+- name: make package
+  shell: |
+    cd "/tmp/scraping"
+    makepkg \
+      --force \
+      --syncdeps \
+      --skipchecksums \
+      --noconfirm \
+      --clean \
+      --cleanbuild
+
+- name: install packages
+  shell: |
+    yay -U $( find "/tmp/scraping" -name "scraping-git-*.tar.xz" ) --noconfirm
+    yay -U $( find "/tmp/scraping" -name "scraping-pr0n-git-*.tar.xz" ) --noconfirm
+    yay -U $( find "/tmp/scraping" -name "downloading-git-*.tar.xz" ) --noconfirm
