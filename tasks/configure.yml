@@ -11,3 +11,4 @@
     domain: "{{ forge_domain }}"
     ip: "{{ ipify_public_ip }}"
     name: "{{ forge_subdomain }}"
+  delegate_to: localhost
