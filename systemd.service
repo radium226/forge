@@ -1,0 +1,8 @@
+[Unit]
+Description=Forge Service
+
+[Service]
+Type=simple
+User=forge
+Password=forge
+ExecStart=/usr/lib/forge/forged
