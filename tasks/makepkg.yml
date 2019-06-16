@@ -1,25 +1,25 @@
 ---
 - name: delete old working directory
   file:
-    path: "/tmp/scraping"
+    path: "/tmp/forge"
     state: absent
   changed_when: false
 
 - name: create working directory
   file:
-    path: "/tmp/scraping"
+    path: "/tmp/forge"
     state: directory
   changed_when: false
 
 - name: clone git repo
   git:
-    repo: "ssh://git@gitlab.com/self-hosting/scraping.git"
+    repo: "https://github.com/radium226/forge.git"
     version: "arch-package"
-    dest: "/tmp/scraping"
+    dest: "/tmp/forge"
 
 - name: make package
   shell: |
-    cd "/tmp/scraping"
+    cd "/tmp/forge"
     makepkg \
       --force \
       --syncdeps \
@@ -30,6 +30,4 @@
 
 - name: install packages
   shell: |
-    yay -U $( find "/tmp/scraping" -name "scraping-git-*.tar.xz" ) --noconfirm
-    yay -U $( find "/tmp/scraping" -name "scraping-pr0n-git-*.tar.xz" ) --noconfirm
-    yay -U $( find "/tmp/scraping" -name "downloading-git-*.tar.xz" ) --noconfirm
+    find "/tmp/forge" -name "-*pkg.tar.xz" -exec yay -U "{}" --noconfirm \;
