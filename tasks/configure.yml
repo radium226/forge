@@ -14,6 +14,11 @@
     state: present
   delegate_to: localhost
 
+- name: install packages
+  yay:
+    name: "python-passlib"
+    state: present
+
 - name: update password
   user:
     name="{{ forge_user }}"
