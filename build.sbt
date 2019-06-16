@@ -1,5 +1,7 @@
 import sbt.Keys.libraryDependencies
 
+logLevel := Level.Debug
+
 ThisBuild / organization := "com.github.radium226"
 ThisBuild / scalaVersion := "2.12.7"
 ThisBuild / version      := "0.1-SNAPSHOT"
@@ -33,6 +35,7 @@ lazy val root = (project in file("."))
     publishTo := Some("forge" at "http://forge.rouages.xyz:1234/maven2"),
     credentials += Credentials(file(".credentials")), 
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8"),
+    updateOptions := updateOptions.value.withGigahorse(false) // https://github.com/sbt/sbt/issues/3570
   )
 
 
