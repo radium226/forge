@@ -26,6 +26,9 @@ object Maven {
           response  = Response[F](Ok)
         } yield response
 
+      case GET -> Root as user =>
+        F.pure(Response[F](Ok).withEntity(s"Hello ${user}! "))
+
       case GET -> filePathVar(filePath) as _ =>
         F.delay(Files.exists(filePath)).map({
           case true =>
