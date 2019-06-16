@@ -16,3 +16,8 @@ project/plugins/project/
 .scala_dependencies
 .worksheet
 .idea
+
+# Arch
+/src
+/pkg
+/*.pkg.tar.xz
