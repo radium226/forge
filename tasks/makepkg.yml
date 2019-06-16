@@ -28,11 +28,8 @@
       --skipchecksums \
       --noconfirm \
       --clean \
-      --cleanbuild
-
-- name: install packages
-  shell: |
-    find "/tmp/forge" -name "*.pkg.tar.xz" -exec yay -U "{}" --noconfirm \;
+      --cleanbuild \
+      --install
 
 - name: start service
   systemd:
