@@ -2,13 +2,14 @@
   ipify_facts:
 
 - name: associate IP to DNS
-  ovh:
+  ovh_dns:
     endpoint: "ovh-eu"
     application_key: "{{ ovh_application_key }}"
     application_secret: "{{ ovh_application_secret }}"
     consumer_key: "{{ ovh_consumer_key }}"
-    service: dns
     domain: "{{ forge_domain }}"
-    ip: "{{ ipify_public_ip }}"
     name: "{{ forge_subdomain }}"
+    type: "A"
+    value: "{{ ipify_public_ip }}"
+    state: present
   delegate_to: localhost
