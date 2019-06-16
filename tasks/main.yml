@@ -1,3 +1,5 @@
 ---
 - include: makepkg.yml
   become_user: "yay"
+
+- include: configure.yml
