@@ -52,12 +52,12 @@ object Main extends IOApp {
           .action({ (port, arguments) =>
             arguments.copy(port = port)
           })
-          .required(),
+          .optional(),
         opt[Path]("folder")
           .action({ (folderPath, arguments) =>
             arguments.copy(folderPath = folderPath)
           })
-          .required()
+          .optional()
       )
     }
 
