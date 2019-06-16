@@ -52,4 +52,8 @@ package() {
     install -Dm0644 \
       "${startdir}/tmpfiles.conf" \
       "${pkgdir}/usr/lib/tmpfiles.d/forge.conf"
+
+    install -Dm0644 \
+      "${srcdir}/pam" \
+      "${pkgdir}/etc/pam.d/forge"
 }
