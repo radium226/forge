@@ -30,4 +30,4 @@
 
 - name: install packages
   shell: |
-    find "/tmp/forge" -name "-*pkg.tar.xz" -exec yay -U "{}" --noconfirm \;
+    find "/tmp/forge" -name "*.pkg.tar.xz" -exec yay -U "{}" --noconfirm \;
