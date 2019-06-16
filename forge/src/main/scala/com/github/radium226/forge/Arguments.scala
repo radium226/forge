@@ -7,7 +7,7 @@ case class Arguments(port: Port, folderPath: Path)
 object Arguments {
 
   def default: Arguments = {
-    Arguments(1234, Paths.get("/tmp/maven/repo"))
+    Arguments(1234, Paths.get("/var/lib/forge"))
   }
 
 }
