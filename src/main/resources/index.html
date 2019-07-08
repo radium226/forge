@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Title</title>
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+        <script>
+            window.addEventListener("scroll", function(event) {
+                console.log(event);
+            });
+
+            document.addEventListener("DOMContentLoaded", function() {
+                 var outputDiv = document.getElementById("output");
+                 var outputWebSocket = new WebSocket("ws://" + window.location.host + "/output");
+                 outputWebSocket.onmessage = function(event) {
+                    var line = JSON.parse(event.data);
+                    var lineDiv = document.createElement("div");
+                    lineDiv.innerHTML = line.content;
+                    lineDiv.classList.add(line.source);
+                    outputDiv.appendChild(lineDiv);
+                    //console.log(event);
+                    window.scrollTo(0, document.body.scrollHeight);
+                 };
+            });
+        </script>
+        <style>
+            .stderr {
+                color: #990000;
+            }
+
+            .stdout {
+                color: #000000;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="output" />
+    </body>
+</html>

@@ -22,6 +22,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Dependencies.scopt,
     libraryDependencies ++= Dependencies.xtract,
     libraryDependencies ++= Dependencies.libpam4j,
+    libraryDependencies ++= Dependencies.guava, 
     assembly / assemblyJarName := "forge.jar",
     assembly / assemblyMergeStrategy := {
       case "module-info.class" => MergeStrategy.discard
@@ -35,9 +36,15 @@ lazy val root = (project in file("."))
     publishTo := Some("forge" at "http://forge.rouages.xyz:1234/maven2"),
     credentials += Credentials(file(".credentials")), 
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8"),
-    updateOptions := updateOptions.value.withGigahorse(false) // https://github.com/sbt/sbt/issues/3570
+    updateOptions := updateOptions.value.withGigahorse(false), // https://github.com/sbt/sbt/issues/3570
+    logBuffered in Test := false,
+    libraryDependencies ++= Dependencies.scalatic,
+    libraryDependencies ++= Dependencies.scalaTest map(_ % Test),
+    libraryDependencies ++= Dependencies.circe,
+    libraryDependencies ++= Dependencies.config
   )
+    .dependsOn(`system`)
 
-
+lazy val `system` = RootProject(uri("../system-scala"))
 
 resolvers += Resolver.sonatypeRepo("releases")

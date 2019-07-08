@@ -21,10 +21,7 @@ object Dependencies {
   )
 
   lazy val config = Seq(
-    "com.typesafe" % "config" % "1.3.3"
-  )
-
-  lazy val ficus = Seq(
+    "com.typesafe" % "config" % "1.3.4",
     "com.iheart" %% "ficus" % "1.4.3"
   )
 
@@ -51,6 +48,23 @@ object Dependencies {
 
   lazy val libpam4j = Seq(
     "org.kohsuke" % "libpam4j" % "1.11"
+  )
+
+  lazy val scalatic = Seq(
+    "org.scalactic" %% "scalactic" % "3.0.8"
+  )
+
+  lazy val scalaTest = Seq(
+    "org.scalatest" %% "scalatest" % "3.0.8"
+  )
+
+  lazy val guava = Seq(
+    "com.google.guava" % "guava" % "28.0-jre"
+  )
+
+  lazy val circe = Seq(
+    "io.circe" %% "circe-core" % "0.11.1",
+    "io.circe" %% "circe-parser" % "0.11.1"
   )
 
 }

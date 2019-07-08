@@ -13,6 +13,7 @@ import java.nio.file.Files
 import java.nio.file.attribute.{BasicFileAttributes, FileTime}
 import java.io.FileOutputStream
 
+import com.google.common.io.{MoreFiles, RecursiveDeleteOption}
 import fs2._
 import org.http4s._
 
@@ -20,6 +21,32 @@ import scala.concurrent.ExecutionContext
 
 
 package object io {
+
+  object folders {
+
+    def create[F[_]](folderPath: Path)(implicit F: Sync[F]): F[Path] = {
+      F.delay(Files.createDirectories(folderPath)).as(folderPath)
+    }
+
+    def list[F[_]](folderPath: Path, recursive: Boolean)(implicit F: Sync[F]): F[List[Path]] = {
+      F.delay {
+        Files.list(folderPath)
+            .collect(Collectors.toList())
+            .asScala
+            .toList
+            .partition(Files.isDirectory(_))
+      } flatMap { case (folderPaths, _) =>
+        for {
+          deeperFolderPaths <- if (recursive) folderPaths.flatTraverse(listFolders[F](_)) else F.pure(List.empty[Path])
+        } yield folderPaths ++ deeperFolderPaths
+      }
+    }
+
+    def deleteContent[F[_]](folderPath: Path)(implicit F: Sync[F]): F[Unit] = {
+      F.delay(MoreFiles.deleteDirectoryContents(folderPath))
+    }
+
+  }
 
   def listFiles[F[_]](folderPath: Path)(implicit F: Sync[F]): F[List[Path]] = {
     F.delay {
@@ -36,6 +63,24 @@ package object io {
     }
   }
 
+  def move[F[_]](originFolderPath: Path, targetFolderPath: Path)(implicit F: Sync[F]): F[Path] = {
+    F.delay(Files.move(originFolderPath, targetFolderPath.resolve(originFolderPath.getFileName)))
+  }
+
+  def listFolders[F[_]](folderPath: Path)(implicit F: Sync[F]): F[List[Path]] = {
+    F.delay {
+      Files.list(folderPath)
+        .collect(Collectors.toList())
+        .asScala
+        .toList
+        .partition(Files.isDirectory(_))
+    } flatMap { case (folderPaths, _) =>
+      for {
+        deeperFolderPaths <- folderPaths.flatTraverse(listFolders[F](_))
+      } yield folderPaths ++ deeperFolderPaths
+    }
+  }
+
   def locateFiles[F[_]](folderPath: Path, regex: Regex)(implicit F: Sync[F]): F[List[Path]] = {
     listFiles(folderPath)
       .map({ t =>
@@ -49,6 +94,10 @@ package object io {
 
   def makeParentFolder[F[_]](filePath: Path)(implicit F: Sync[F]): F[Unit] = {
     F.delay(Files.createDirectories(filePath.getParent))
+  }
+
+  def makeFolder[F[_]](folderPath: Path)(implicit F: Sync[F]): F[Unit] = {
+    F.delay(Files.createDirectories(folderPath))
   }
 
   def fileAttributes[F[_]](filePath: Path)(implicit F: Sync[F]): F[BasicFileAttributes] = {
