@@ -29,17 +29,16 @@ package object io {
     }
 
     def list[F[_]](folderPath: Path, recursive: Boolean)(implicit F: Sync[F]): F[List[Path]] = {
-      F.delay {
+      F.delay(
         Files.list(folderPath)
-            .collect(Collectors.toList())
-            .asScala
-            .toList
-            .partition(Files.isDirectory(_))
-      } flatMap { case (folderPaths, _) =>
-        for {
-          deeperFolderPaths <- if (recursive) folderPaths.flatTraverse(listFolders[F](_)) else F.pure(List.empty[Path])
-        } yield folderPaths ++ deeperFolderPaths
-      }
+          .collect(Collectors.toList())
+          .asScala
+          .toList
+          .partition(Files.isDirectory(_))
+      ).flatMap({ case (folderPaths, _) =>
+        (if (recursive) folderPaths.flatTraverse(listFolders[F](_)) else F.pure(List.empty[Path]))
+          .map(_ ++ folderPaths)
+      })
     }
 
     def deleteContent[F[_]](folderPath: Path)(implicit F: Sync[F]): F[Unit] = {

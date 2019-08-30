@@ -22,7 +22,10 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Dependencies.scopt,
     libraryDependencies ++= Dependencies.xtract,
     libraryDependencies ++= Dependencies.libpam4j,
-    libraryDependencies ++= Dependencies.guava, 
+    libraryDependencies ++= Dependencies.guava,
+    libraryDependencies += "org.jfastcgi.client" % "client-core" % "2.4-SNAPSHOT",
+    libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3",
+    libraryDependencies += "uk.co.caprica" % "juds" % "0.94.1",
     assembly / assemblyJarName := "forge.jar",
     assembly / assemblyMergeStrategy := {
       case "module-info.class" => MergeStrategy.discard
@@ -43,8 +46,11 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Dependencies.circe,
     libraryDependencies ++= Dependencies.config
   )
-    .dependsOn(`system`)
+    .dependsOn(`system`, `http4s-fastcgi`)
 
 lazy val `system` = RootProject(uri("../system-scala"))
 
+lazy val `http4s-fastcgi` = RootProject(uri("../http4s-fastcgi"))
+
 resolvers += Resolver.sonatypeRepo("releases")
+resolvers += Resolver.mavenLocal

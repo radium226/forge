@@ -13,6 +13,7 @@ import fs2.concurrent.Topic
 import scala.concurrent.duration._
 
 class Repo[F[_]](val folderPath: Path, commitTopic: CommitTopic[F]) {
+  self =>
 
   def executor: Executor[F] = {
     Executor[F](workingFolderPath = Some(folderPath))

@@ -5,7 +5,6 @@ import java.nio.file.Path
 import cats.data.{Kleisli, OptionT}
 import cats.effect.{ExitCode, IO, IOApp}
 import com.github.radium226.forge._
-import com.github.radium226.forge.maven.Maven
 import com.github.radium226.forge.pacman.Pacman
 import com.github.radium226.io.makeParentFolder
 import fs2.{Pipe, Stream}
@@ -19,6 +18,7 @@ import org.http4s.server.middleware.authentication.BasicAuth
 import org.http4s.server.middleware.authentication.BasicAuth.BasicAuthenticator
 import org.jvnet.libpam.PAM
 import scopt.OParser
+import com.github.radium226.forge.maven.Maven
 
 import scala.concurrent.ExecutionContext
 import scala.util._
