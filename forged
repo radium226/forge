@@ -2,4 +2,5 @@
 
 java \
   -cp "/usr/lib/forge/share/forge.jar" \
-  "com.github.radium226.forge.server.Main" "${@}"
+  "com.github.radium226.forge.server.Main" \
+    "${@}"

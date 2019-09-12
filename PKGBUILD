@@ -43,6 +43,10 @@ package() {
       "${srcdir}/forged" \
       "${pkgdir}/usr/lib/forge/bin/forged"
 
+    install -Dm0755 \
+      "${srcdir}/forge" \
+      "${pkgdir}/usr/bin/forge"
+
     install -Dm0644 \
       "${startdir}/systemd.service" \
       "${pkgdir}/usr/lib/systemd/system/forge.service"
