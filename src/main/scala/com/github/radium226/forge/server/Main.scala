@@ -1,69 +1,98 @@
 package com.github.radium226.forge.server
 
-import java.net.http.HttpResponse
+import java.nio.file.{Files, Path => JavaPath}
 
-import cats._
-import cats.data._
-import cats.effect.concurrent._
+import cats.data.ReaderT
 import cats.effect._
-import cats.implicits._
-import com.github.radium226.system.execute._
-import com.google.common.io.Resources
-import fs2.concurrent._
-import fs2._
-import _root_.io.circe._
-import _root_.io.circe.syntax._
+import com.github.radium226.fastcgi.FastCGI
+import com.github.radium226.git.Repo
+import com.github.radium226.http4s.fastcgi.FastCGIAppBuilder
+import org.http4s.server.Server
+import org.http4s.{HttpApp, HttpRoutes, QueryParamDecoder, Request, Response}
+import io.chrisdavenport.vault._
+import org.http4s.dsl._
 import org.http4s.dsl.io._
-import org.http4s.implicits._
-import org.http4s.server.blaze.BlazeServerBuilder
-import org.http4s.server.websocket._
-import org.http4s.websocket.WebSocketFrame._
-import org.http4s.server.blaze._
-import org.http4s.implicits._
 import org.http4s.server._
-import org.http4s._
+import org.http4s.server.blaze.BlazeServerBuilder
+import cats.implicits._
+import com.github.radium226.forge.config.ConfigBuilder
+import com.github.radium226.forge.project.Project
+import org.http4s.implicits._
 
-import scala.concurrent.ExecutionContext
-import java.nio.file.{Files, Path, Paths}
+object Main extends IOApp with ConfigSupport {
 
-import _root_.com.github.radium226.io._
+  object ProjectNameQueryParamMatcher extends QueryParamDecoderMatcher[String]("projectName")
 
-object Main extends IOApp {
+  object ProjectNameEndingWithGitVar {
 
-  def makeRoutes[F[_]]()(implicit F: Concurrent[F], contextShift: ContextShift[F]): F[HttpRoutes[F]] = {
-   F.delay({
-      HttpRoutes.of[F] {
-        case POST -> Root / "projects" / projectName / "builds" =>
-          for {
-            project  <- Project.byName[F](projectName)
-            job      <- project.build
-            response  = Response[F](Ok).withEntity(s"${job.index}")
-          } yield response
+    def unapply(segment: String): Option[(String)] = {
+      if (segment.endsWith(".git")) Some(segment.dropRight(".git".length))
+      else None
+    }
 
-        case GET -> Root / "projects" / projectName / "builds" / IntVar(jobIndex) / "output" =>
-          for {
-            project  <- Project.byName[F](projectName)
-            jobs     <- project.jobs
-            _         = println(jobs)
-            job      <- jobs.find(_.index == jobIndex).map(F.pure).getOrElse(F.raiseError[Job[F]](new Exception(s"There is no job #${jobIndex}! ")))
-            output   <- job.output
-            response  = Response[F](Ok).withEntity(output.through(fs2.text.utf8Encode[F]))
-          } yield response
-      }
-    })
   }
 
-  def makeServer[F[_]](port: Int, routes: HttpRoutes[F])(implicit F: ConcurrentEffect[F], timer: Timer[F]): F[Unit] = {
-    BlazeServerBuilder[F]
-      .withHttpApp(routes.recover({ case t => println(t) ; Response.notFound[F] }).orNotFound)
-      .bindHttp(port, "0.0.0.0")
-      .resource.use(_ => F.never)
+  def serve(config: Config[IO], httpApp: HttpApp[IO]): Resource[IO, Server[IO]] = {
+    for {
+      port   <- Resource.liftF[IO, Int](config.port.liftTo[IO](new Exception("Unable to retreive port")))
+      server <- BlazeServerBuilder[IO]
+        .withHttpApp(httpApp)
+        .bindHttp(port, "0.0.0.0")
+        .resource
+    } yield server
+
+  }
+
+  def makeRoutes(config: Config[IO]): Resource[IO, HttpRoutes[IO]] = {
+    for {
+      baseFolderPath    <- Resource.liftF(config.baseFolderPath.liftTo[IO](new Exception("Unable to retreive baseFolderPath")))
+      gitProjectRootKey <- Resource.liftF[IO, Key[JavaPath]](Key.newKey[IO, JavaPath])
+      gitApp            <- FastCGIAppBuilder[IO]
+        .withParam("SCRIPT_FILENAME" -> "/usr/lib/git-core/git-http-backend")
+        .withParam({ request =>
+          "GIT_PROJECT_ROOT" -> request.attributes.lookup(gitProjectRootKey).map(_.toString)
+        })
+        .withParam("GIT_HTTP_EXPORT_ALL")
+        .build
+
+      gitRoutes          = HttpRoutes.of[IO]({
+        case oldRequest @ _ -> "projects" /: ProjectNameEndingWithGitVar(projectName) /: _ =>
+          val oldCaret = oldRequest.attributes
+            .lookup(Request.Keys.PathInfoCaret)
+            .getOrElse(0)
+
+          val newCaret = s"projects/${projectName}.git".length + 1
+          val newRequest = oldRequest
+            .withAttribute(Request.Keys.PathInfoCaret, oldCaret + newCaret)
+            .withAttribute(gitProjectRootKey, baseFolderPath.resolve(projectName).resolve("git"))
+
+          gitApp.run(newRequest)
+      })
+
+      projectRoutes      = HttpRoutes.of[IO]({
+        case POST -> Root / "projects" :? ProjectNameQueryParamMatcher(projectName) =>
+          for {
+            project  <- Project.init[IO](baseFolderPath, projectName)
+            response <- Ok()
+          } yield response
+
+        case DELETE -> Root / "projects" / projectName =>
+          for {
+            project  <- Project.lookUp[IO](baseFolderPath, projectName)
+            _        <- project.trash
+            response <- Ok()
+          } yield response
+      })
+    } yield gitRoutes <+> projectRoutes
   }
 
   override def run(arguments: List[String]): IO[ExitCode] = {
-    for {
-      routes <- makeRoutes[IO]()
-      _      <- makeServer[IO](8080, routes)
-    } yield ExitCode.Success
+   (for {
+      config         <- ConfigBuilder.resource[IO, Config[IO]](arguments)
+      httpRoutes     <- makeRoutes(config)
+      httpApp         = httpRoutes.orNotFound
+      _              <- serve(config, httpApp)
+    } yield ()).use({ _ => IO.never })
   }
+
 }

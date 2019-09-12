@@ -44,7 +44,8 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Dependencies.scalatic,
     libraryDependencies ++= Dependencies.scalaTest map(_ % Test),
     libraryDependencies ++= Dependencies.circe,
-    libraryDependencies ++= Dependencies.config
+    libraryDependencies ++= Dependencies.config,
+    libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13"
   )
     .dependsOn(`system`, `http4s-fastcgi`)
 
