@@ -4,6 +4,8 @@ package object git {
 
   type HookName = String
 
+  type RemoteName = String
+
   type Content = String
 
   type ConfigKey = String

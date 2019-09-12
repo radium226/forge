@@ -6,6 +6,7 @@ import cats._
 import cats.effect._
 import cats.implicits._
 import com.github.radium226.system.execute._
+import org.http4s.Uri
 
 object Repo {
 
@@ -38,6 +39,15 @@ case class Repo[F[_]](folderPath: Path, bare: Boolean) {
 
   def addHook(name: HookName, scriptFilePath: Path): F[Unit] = {
     ???
+  }
+
+  def addRemote(name: RemoteName, uri: Uri)(implicit F: Sync[F]): F[Unit] = {
+    Executor[F](workingFolderPath = Some(folderPath)).execute("git", "remote", "add", name, uri.renderString).foreground.void
+  }
+
+  def git(subCommands: String*)(implicit F: Sync[F]): F[Unit] = {
+    val command = "git" +: subCommands
+    Executor[F](workingFolderPath = Some(folderPath)).execute(command: _*).foreground.void
   }
 
   def updateConfig(key: ConfigKey, value: ConfigValue)(implicit F: Sync[F]): F[Unit] = {

@@ -1,14 +1,13 @@
 package com.github.radium226.forge.client
 
-import java.nio.file.Paths
-
-import enumeratum._
+import java.nio.file.{Paths, Path}
 
 sealed trait Action
 
 object Action {
 
   case class Init(
+    folderPath: Path,
     projectName: String
   )  extends Action
 
@@ -16,6 +15,7 @@ object Action {
 
     def default: Init = {
       Init(
+        folderPath = Paths.get(System.getProperty("user.dir")),
         projectName = Paths.get(System.getProperty("user.dir")).getFileName.toString
       )
     }

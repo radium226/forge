@@ -56,12 +56,12 @@ object Main extends IOApp with ConfigSupport {
         .build
 
       gitRoutes          = HttpRoutes.of[IO]({
-        case oldRequest @ _ -> "projects" /: ProjectNameEndingWithGitVar(projectName) /: _ =>
+        case oldRequest @ _ -> "git" /: ProjectNameEndingWithGitVar(projectName) /: _ =>
           val oldCaret = oldRequest.attributes
             .lookup(Request.Keys.PathInfoCaret)
             .getOrElse(0)
 
-          val newCaret = s"projects/${projectName}.git".length + 1
+          val newCaret = s"git/${projectName}.git".length + 1
           val newRequest = oldRequest
             .withAttribute(Request.Keys.PathInfoCaret, oldCaret + newCaret)
             .withAttribute(gitProjectRootKey, baseFolderPath.resolve(projectName).resolve("git"))
