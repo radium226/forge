@@ -36,7 +36,7 @@ build() {
 
 package() {
     install -Dm0644 \
-      "${srcdir}/forge/target/scala-2.12/forge.jar" \
+      "${srcdir}/forge/modules/forge/target/scala-2.12/forge.jar" \
       "${pkgdir}/usr/lib/forge/share/forge.jar"
 
     install -Dm0755 \
