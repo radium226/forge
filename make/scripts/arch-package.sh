@@ -19,6 +19,7 @@ main()
   else
     git fetch --all
     git reset --hard "origin/arch-package"
+    git pull
   fi
 
   makepkg \
