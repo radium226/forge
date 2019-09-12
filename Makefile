@@ -1,3 +1,5 @@
+include make/arch-package.mk
+
 SHELL=/bin/bash
 .SHELLFLAGS = -e -u -c
 .ONESHELL:

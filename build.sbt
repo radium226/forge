@@ -14,7 +14,7 @@ ThisBuild / scalacOptions ++= Seq(
   "-language:higherKinds",
   "-Ypartial-unification")
 
-lazy val root = (project in file("."))
+lazy val root = (project in file("modules/forge"))
   .settings(
     name := "forge",
     libraryDependencies ++= Dependencies.cats,
@@ -23,7 +23,6 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Dependencies.xtract,
     libraryDependencies ++= Dependencies.libpam4j,
     libraryDependencies ++= Dependencies.guava,
-    libraryDependencies += "org.jfastcgi.client" % "client-core" % "2.4-SNAPSHOT",
     libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3",
     libraryDependencies += "uk.co.caprica" % "juds" % "0.94.1",
     assembly / assemblyJarName := "forge.jar",
@@ -37,7 +36,7 @@ lazy val root = (project in file("."))
     publishMavenStyle := true,
     publishArtifact in (Compile, packageDoc) := false,
     publishTo := Some("forge" at "http://forge.rouages.xyz:1234/maven2"),
-    credentials += Credentials(file(".credentials")), 
+    credentials += Credentials(file(".credentials")),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8"),
     updateOptions := updateOptions.value.withGigahorse(false), // https://github.com/sbt/sbt/issues/3570
     logBuffered in Test := false,
