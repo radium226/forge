@@ -27,7 +27,12 @@ lazy val root = (project in file("modules/forge"))
     libraryDependencies += "uk.co.caprica" % "juds" % "0.94.1",
     assembly / assemblyJarName := "forge.jar",
     assembly / assemblyMergeStrategy := {
-      case x if x.endsWith("module-info.class") => MergeStrategy.discard
+      case x if x.endsWith("module-info.class") =>
+        MergeStrategy.discard
+
+      case x if x.contains("junixsocket") =>
+        MergeStrategy.singleOrError
+
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)

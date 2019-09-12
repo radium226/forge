@@ -1,4 +1,5 @@
 include make/arch-package.mk
+include make/server.mk
 
 SHELL=/bin/bash
 .SHELLFLAGS = -e -u -c
