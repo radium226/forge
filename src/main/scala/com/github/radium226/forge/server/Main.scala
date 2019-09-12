@@ -49,7 +49,7 @@ object Main extends IOApp with ConfigSupport {
       gitProjectRootKey <- Resource.liftF[IO, Key[JavaPath]](Key.newKey[IO, JavaPath])
       gitApp            <- FastCGIAppBuilder[IO]
         .withParam("SCRIPT_FILENAME" -> "/usr/lib/git-core/git-http-backend")
-        .withParam({ request =>
+        .withParam({ request: Request[IO] =>
           "GIT_PROJECT_ROOT" -> request.attributes.lookup(gitProjectRootKey).map(_.toString)
         })
         .withParam("GIT_HTTP_EXPORT_ALL")
