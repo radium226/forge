@@ -12,7 +12,6 @@ import scopt._
 import com.github.radium226.scopt.{implicits => ScoptImplicits}
 import com.github.radium226.ficus.{implicits => FicusImplicits}
 import cats.implicits._
-import com.github.radium226.forge.client.Action
 
 trait ConfigSupport extends ScoptImplicits with FicusImplicits {
 

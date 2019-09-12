@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 main()
 {
   declare folder_path="$( mktemp -d )"
@@ -7,8 +9,9 @@ main()
   cd "${folder_path}"
   git clone \
     --single-branch \
-    --branch"arch-package" \
-      "${git_repo_url}"
+    --branch "arch-package" \
+      "${git_repo_url}" \
+      "."
 
   makepkg \
     --cleanbuild \
