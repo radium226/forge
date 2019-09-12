@@ -14,9 +14,10 @@ import org.http4s.dsl._
 import org.http4s.dsl.io._
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
-import cats.implicits._
 import com.github.radium226.forge.config.ConfigBuilder
 import com.github.radium226.forge.project.Project
+
+import cats.implicits._
 import org.http4s.implicits._
 
 object Main extends IOApp with ConfigSupport {
@@ -49,7 +50,7 @@ object Main extends IOApp with ConfigSupport {
       gitProjectRootKey <- Resource.liftF[IO, Key[JavaPath]](Key.newKey[IO, JavaPath])
       gitApp            <- FastCGIAppBuilder[IO]
         .withParam("SCRIPT_FILENAME" -> "/usr/lib/git-core/git-http-backend")
-        .withParam({ request: Request[IO] =>
+        .withParam({ request =>
           "GIT_PROJECT_ROOT" -> request.attributes.lookup(gitProjectRootKey).map(_.toString)
         })
         .withParam("GIT_HTTP_EXPORT_ALL")

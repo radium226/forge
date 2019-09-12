@@ -4,9 +4,12 @@ set -euo pipefail
 
 main()
 {
-  declare folder_path="$( mktemp -d )"
+  declare work_folder_path="${WORK_FOLDER_PATH:-$( mktemp -d )}"
   declare git_repo_url="$( git config --get remote.origin.url )"
-  cd "${folder_path}"
+
+  mkdir -p "${WORK_FOLDER_PATH}"
+
+  cd "${work_folder_path}"
   git clone \
     --single-branch \
     --branch "arch-package" \
