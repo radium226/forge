@@ -24,7 +24,8 @@ main()
   makepkg \
     --cleanbuild \
     --clean \
-    --skipinteg
+    --skipinteg \
+    --install
 
   cd -
 }
