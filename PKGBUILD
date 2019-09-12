@@ -28,6 +28,7 @@ source=(
     "systemd.service"
     "sysusers.conf"
     "tmpfiles.conf"
+    "server.conf"
 )
 
 build() {
@@ -59,6 +60,10 @@ package() {
     install -Dm0644 \
       "${startdir}/tmpfiles.conf" \
       "${pkgdir}/usr/lib/tmpfiles.d/forge.conf"
+
+    install -Dm0644 \
+      "${startdir}/server.conf" \
+      "${pkgdir}/etc/forge/server.conf"
 
     install -Dm0644 \
       "${startdir}/pam" \
