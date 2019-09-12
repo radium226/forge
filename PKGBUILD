@@ -24,6 +24,7 @@ source=(
     "git+https://github.com/radium226/http4s-fastcgi.git"
     "git+https://gitlab.com/self-hosting/system-scala.git"
     "forged"
+    "forge_"
     "systemd.service"
     "sysusers.conf"
     "tmpfiles.conf"
@@ -44,7 +45,7 @@ package() {
       "${pkgdir}/usr/lib/forge/bin/forged"
 
     install -Dm0755 \
-      "${srcdir}/forge" \
+      "${srcdir}/forge-WRONG_NAME" \
       "${pkgdir}/usr/bin/forge"
 
     install -Dm0644 \
