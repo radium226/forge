@@ -17,7 +17,8 @@ main()
         "${git_repo_url}" \
         "."
   else
-    git pull
+    git fetch --all
+    git reset --hard "origin/arch-package"
   fi
 
   makepkg \
