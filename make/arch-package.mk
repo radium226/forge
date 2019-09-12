@@ -1,3 +1,5 @@
+WORK_FOLDER_PATH := /tmp/forge/arch-package
+
 .PHONY: arch-package
 arch-package:
-	./make/scripts/arch-package.sh
+	WORK_FOLDER_PATH="$(WORK_FOLDER_PATH)" ./make/scripts/arch-package.sh
