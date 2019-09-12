@@ -25,7 +25,8 @@ main()
     --cleanbuild \
     --clean \
     --skipinteg \
-    --install
+    --install \
+    --noconfirm
 
   cd -
 }
