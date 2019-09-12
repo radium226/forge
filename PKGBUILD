@@ -1,4 +1,4 @@
-pkgver=r7.3b7721b
+pkgver=r21.2467a7f
 pkgrel=1
 
 pkgname=("forge-git")
@@ -21,6 +21,8 @@ depends=(
 
 source=(
     "git+https://github.com/radium226/forge.git"
+    "git+https://github.com/radium226/http4s-fastcgi.git"
+    "git+https://gitlab.com/self-hosting/system-scala.git"
     "forged"
     "systemd.service"
     "sysusers.conf"
@@ -29,7 +31,7 @@ source=(
 
 build() {
     cd "forge"
-    sbt "assembly"
+    sbt "assembly" <"/dev/null"
 }
 
 package() {
