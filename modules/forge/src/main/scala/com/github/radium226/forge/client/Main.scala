@@ -60,6 +60,16 @@ object Main extends IOApp with ConfigSupport {
           } yield ()
         })
 
+      case EmitHook(Some(hookName), projectName) =>
+        BlazeClientBuilder[IO](ExecutionContext.global).resource.use({ client =>
+          for {
+            port      <- config.port.liftTo[IO](new Exception("Unable to retrieve port"))
+            host      <- config.host.liftTo[IO](new Exception("Unable to retrieve host"))
+            baseUri   <- Uri.fromString(s"http://${host}:${port}").liftTo[IO]
+            uri        = baseUri.withPath(s"/projects/${projectName}/hooks/${hookName}")
+            _         <- client.expect[Unit](Request[IO](uri = uri, method = Method.PUT))
+          } yield ()
+        })
       case _ =>
         IO(???)
     }

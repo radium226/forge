@@ -23,6 +23,21 @@ object Action {
   }
 
   case object Trash extends Action
+
+  case class EmitHook(
+    hookName: Option[String],
+    projectName: String
+  ) extends Action
+
+  object EmitHook {
+
+    def default = EmitHook(
+      hookName = None,
+      projectName = Paths.get(System.getProperty("user.dir")).getFileName.toString
+    )
+
+  }
+
   case object Help  extends Action
 
 }

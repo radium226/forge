@@ -90,6 +90,27 @@ trait ConfigSupport extends ScoptImplicits with FicusImplicits {
           .action({ (_, config) =>
             config.copy(action = Action.Trash)
           }),
+        cmd("emit-hook")
+          .action({ (_, config) =>
+            config.copy(action = Action.EmitHook.default)
+          })
+          .children(
+            opt[String]("hook-name")
+              .action({ (hookName, config) =>
+                config.copyAction({
+                  case action: Action.EmitHook =>
+                    action.copy(hookName = Some(hookName))
+                })
+              }),
+            opt[String]("project-name")
+              .action({ (projectName, config) =>
+                config.copyAction({
+                  case action: Action.Init =>
+                    action.copy(projectName = projectName)
+                })
+              })
+              .optional()
+          ),
         cmd("help")
           .action({ (_, config) =>
             config.copy(action = Action.Help)
