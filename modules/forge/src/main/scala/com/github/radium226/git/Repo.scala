@@ -27,8 +27,11 @@ object Repo {
     new Repo[F](folderPath, bare)
   }
 
-  def in[F[_]](folderPath: Path): F[Repo[F]] = {
-    ???
+  def in[F[_]](folderPath: Path)(implicit F: Sync[F]): F[Repo[F]] = {
+    for {
+      stdout <- Executor[F](workingFolderPath = Some(folderPath)).execute("git", "rev-parse", "--is-bare-repository").foreground(Keep.stdout)
+      bare    = stdout.trim == "true"
+    } yield Repo[F](folderPath, bare = bare)
   }
 
 }
