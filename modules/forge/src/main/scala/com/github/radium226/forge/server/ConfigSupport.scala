@@ -24,7 +24,8 @@ trait ConfigSupport extends ScoptImplicits with FicusImplicits {
     override def combine(fallbackConfig: Config[F], config: Config[F]): Config[F] = {
       Config[F](
         port = config.port.orElse(fallbackConfig.port),
-        baseFolderPath = config.baseFolderPath.orElse(fallbackConfig.baseFolderPath)
+        baseFolderPath = config.baseFolderPath.orElse(fallbackConfig.baseFolderPath),
+        scriptFolderPath = config.scriptFolderPath.orElse(fallbackConfig.scriptFolderPath)
       )
     }
   }
@@ -35,9 +36,11 @@ trait ConfigSupport extends ScoptImplicits with FicusImplicits {
       val fixedTypeSafeConfig = if (path == ".") typeSafeConfig else typeSafeConfig.getConfig(path)
       val port = fixedTypeSafeConfig.as[Option[Int]](s"port")
       val baseFolderPath = fixedTypeSafeConfig.as[Option[Path]]("base-folder-path")
+      val scriptFolderPath = fixedTypeSafeConfig.as[Option[Path]]("script-folder-path")
       Config[F](
         port = port,
-        baseFolderPath = baseFolderPath
+        baseFolderPath = baseFolderPath,
+        scriptFolderPath = scriptFolderPath
       )
     }
 

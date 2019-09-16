@@ -4,7 +4,8 @@ import java.nio.file.{Path, Paths}
 
 case class Config[F[_]](
   port: Option[Int] = None,
-  baseFolderPath: Option[Path] = None
+  baseFolderPath: Option[Path] = None,
+  scriptFolderPath: Option[Path] = None
 )
 
 object Config {

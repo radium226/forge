@@ -2,7 +2,7 @@ package com.github.radium226.forge.server
 
 import java.nio.file.{Files, Path => JavaPath}
 
-import cats.data.ReaderT
+import cats.data.{NonEmptyList, ReaderT}
 import cats.effect._
 import com.github.radium226.fastcgi.FastCGI
 import com.github.radium226.git.Repo
@@ -16,22 +16,13 @@ import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import com.github.radium226.forge.config.ConfigBuilder
 import com.github.radium226.forge.project.Project
-
-import cats.implicits._
+import com.github.radium226.forge.server.route.{GitRoutes, HookRoutes, ProjectRoutes}
 import org.http4s.implicits._
+import cats.implicits._
+import com.github.radium226.forge.model.Hook
+import fs2.concurrent.Queue
 
 object Main extends IOApp with ConfigSupport {
-
-  object ProjectNameQueryParamMatcher extends QueryParamDecoderMatcher[String]("projectName")
-
-  object ProjectNameEndingWithGitVar {
-
-    def unapply(segment: String): Option[(String)] = {
-      if (segment.endsWith(".git")) Some(segment.dropRight(".git".length))
-      else None
-    }
-
-  }
 
   def serve(config: Config[IO], httpApp: HttpApp[IO]): Resource[IO, Server[IO]] = {
     for {
@@ -44,55 +35,32 @@ object Main extends IOApp with ConfigSupport {
 
   }
 
-  def makeRoutes(config: Config[IO]): Resource[IO, HttpRoutes[IO]] = {
-    for {
-      baseFolderPath    <- Resource.liftF(config.baseFolderPath.liftTo[IO](new Exception("Unable to retreive baseFolderPath")))
-      gitProjectRootKey <- Resource.liftF[IO, Key[JavaPath]](Key.newKey[IO, JavaPath])
-      gitApp            <- FastCGIAppBuilder[IO]
-        .withParam("SCRIPT_FILENAME" -> "/usr/lib/git-core/git-http-backend")
-        .withParam({ request =>
-          "GIT_PROJECT_ROOT" -> request.attributes.lookup(gitProjectRootKey).map(_.toString)
-        })
-        .withParam("GIT_HTTP_EXPORT_ALL")
-        .build
+  def makeRoutes(config: Config[IO], hookQueue: Queue[IO, Hook[IO]]): Resource[IO, HttpRoutes[IO]] = {
+    NonEmptyList.of(
+      GitRoutes[IO](config),
+      ProjectRoutes[IO](config),
+      HookRoutes[IO](config, hookQueue)
+    ).sequence.map(_.reduceK)
+  }
 
-      gitRoutes          = HttpRoutes.of[IO]({
-        case oldRequest @ _ -> "git" /: ProjectNameEndingWithGitVar(projectName) /: _ =>
-          val oldCaret = oldRequest.attributes
-            .lookup(Request.Keys.PathInfoCaret)
-            .getOrElse(0)
-
-          val newCaret = s"git/${projectName}.git".length + 1
-          val newRequest = oldRequest
-            .withAttribute(Request.Keys.PathInfoCaret, oldCaret + newCaret)
-            .withAttribute(gitProjectRootKey, baseFolderPath.resolve(projectName).resolve("git"))
-
-          gitApp.run(newRequest)
+  def triggerBuild(config: Config[IO], hookQueue: Queue[IO, Hook[IO]]): Resource[IO, Unit] = {
+    hookQueue.dequeue
+      .map({ hook =>
+        IO(println(s"We need to build ${hook}"))
       })
-
-      projectRoutes      = HttpRoutes.of[IO]({
-        case POST -> Root / "projects" :? ProjectNameQueryParamMatcher(projectName) =>
-          for {
-            project  <- Project.init[IO](baseFolderPath, projectName)
-            response <- Ok()
-          } yield response
-
-        case DELETE -> Root / "projects" / projectName =>
-          for {
-            project  <- Project.lookUp[IO](baseFolderPath, projectName)
-            _        <- project.trash
-            response <- Ok()
-          } yield response
-      })
-    } yield gitRoutes <+> projectRoutes
+      .compile
+      .resource
+      .drain
   }
 
   override def run(arguments: List[String]): IO[ExitCode] = {
    (for {
+      hookQueue      <- Resource.liftF(Queue.unbounded[IO, Hook[IO]])
       config         <- ConfigBuilder.resource[IO, Config[IO]](arguments)
-      httpRoutes     <- makeRoutes(config)
+      httpRoutes     <- makeRoutes(config, hookQueue)
       httpApp         = httpRoutes.orNotFound
       _              <- serve(config, httpApp)
+      _              <- triggerBuild(config, hookQueue)
     } yield ()).use({ _ => IO.never })
   }
 

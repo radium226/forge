@@ -17,7 +17,7 @@ object Project {
 
   }
 
-  def init[F[_]](baseFolderPath: Path, name: Name)(implicit F: Sync[F]): F[Project[F]] = {
+  def init[F[_]](baseFolderPath: Path, scriptFolderPath: Path, name: Name)(implicit F: Sync[F]): F[Project[F]] = {
     val folderPath = baseFolderPath.resolve(name)
     for {
       //rootFolderPath <- config.lookup(Keys.RootFolderPath).liftTo[F](new NoSuchElementException)
@@ -25,6 +25,10 @@ object Project {
       repoFolderPath  = folderPath.resolve("git")
       repo           <- Repo.init[F](repoFolderPath, shared = true, bare = true)
       _              <- repo.updateConfig("http.receivepack", "true")
+      _              <- List("post-receive").traverse({ hookName =>
+        val scriptFilePath = scriptFolderPath.resolve(hookName)
+        repo.linkHook(hookName, scriptFilePath)
+      })
     } yield new Project[F](folderPath, name, repo)
   }
 

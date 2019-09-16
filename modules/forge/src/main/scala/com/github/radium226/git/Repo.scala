@@ -37,8 +37,8 @@ object Repo {
 
 case class Repo[F[_]](folderPath: Path, bare: Boolean) {
 
-  def addHook(name: HookName, scriptFilePath: Path): F[Unit] = {
-    ???
+  def linkHook(hookName: HookName, scriptFilePath: Path)(implicit F: Sync[F]): F[Unit] = {
+    F.delay(Files.createSymbolicLink(scriptFilePath, folderPath.resolve("hooks").resolve(hookName)))
   }
 
   def addRemote(name: RemoteName, uri: Uri)(implicit F: Sync[F]): F[Unit] = {
