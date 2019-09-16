@@ -23,6 +23,7 @@ object HookRoutes {
           baseFolderPath <- config.baseFolderPath.liftTo[F](new Exception("Unable to retreive baseFolderPath"))
           project <- Project.lookUp(baseFolderPath, projectName)
           hook     = Hook[F](project, "kikoo")
+          _        = println(s" ====> hook=${hook} <======")
           _       <- hookQueue.enqueue1(hook)
         } yield Response[F](status = Accepted)
     }))

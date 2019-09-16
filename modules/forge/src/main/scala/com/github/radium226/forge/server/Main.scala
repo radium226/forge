@@ -44,13 +44,14 @@ object Main extends IOApp with ConfigSupport {
   }
 
   def triggerBuild(config: Config[IO], hookQueue: Queue[IO, Hook[IO]]): Resource[IO, Unit] = {
-    hookQueue.dequeue
+    Resource.liftF(hookQueue.dequeue
       .map({ hook =>
-        IO(println(s"We need to build ${hook}"))
+        IO(println(s" ------> We need to build ${hook} <------"))
       })
       .compile
-      .resource
       .drain
+      .start
+      .void)
   }
 
   override def run(arguments: List[String]): IO[ExitCode] = {
