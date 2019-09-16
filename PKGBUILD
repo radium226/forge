@@ -29,6 +29,7 @@ source=(
     "sysusers.conf"
     "tmpfiles.conf"
     "server.conf"
+    "emit-hook"
 )
 
 build() {
