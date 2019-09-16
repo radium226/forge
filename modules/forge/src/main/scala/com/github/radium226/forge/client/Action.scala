@@ -33,7 +33,7 @@ object Action {
 
     def default = EmitHook(
       hookName = None,
-      projectName = Paths.get(System.getProperty("user.dir")).getFileName.toString
+      projectName = Paths.get(System.getProperty("user.dir")).getParent.getFileName.toString
     )
 
   }
