@@ -45,7 +45,7 @@ object Main extends IOApp with ConfigSupport {
 
   def triggerBuild(config: Config[IO], hookQueue: Queue[IO, Hook[IO]]): Resource[IO, Unit] = {
     Resource.liftF(hookQueue.dequeue
-      .map({ hook =>
+      .evalMap({ hook =>
         IO(println(s" ------> We need to build ${hook} <------"))
       })
       .compile
