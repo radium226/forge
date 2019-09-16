@@ -26,7 +26,7 @@ object Project {
       repo           <- Repo.init[F](repoFolderPath, shared = true, bare = true)
       _              <- repo.updateConfig("http.receivepack", "true")
       _              <- List("post-receive").traverse({ hookName =>
-        val scriptFilePath = scriptFolderPath.resolve(hookName)
+        val scriptFilePath = scriptFolderPath.resolve("emit-hook")
         repo.linkHook(hookName, scriptFilePath)
       })
     } yield new Project[F](folderPath, name, repo)
