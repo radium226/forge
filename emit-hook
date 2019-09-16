@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cat | forge emit-hook \
+  --hook-name="$( basename "${0}" )"

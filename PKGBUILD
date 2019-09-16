@@ -41,6 +41,10 @@ package() {
       "${srcdir}/forge/modules/forge/target/scala-2.12/forge.jar" \
       "${pkgdir}/usr/lib/forge/share/forge.jar"
 
+    install -Dm0644 \
+      "${srcdir}/emit-hook" \
+      "${pkgdir}/usr/lib/forge/bin/emit-hook"
+
     install -Dm0755 \
       "${srcdir}/forged" \
       "${pkgdir}/usr/lib/forge/bin/forged"
