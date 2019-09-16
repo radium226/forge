@@ -14,18 +14,17 @@ object ProjectRoutes {
   def apply[F[_]](config: Config[F])(implicit F: Sync[F]): Resource[F, HttpRoutes[F]] = {
     Resource.liftF(for {
       baseFolderPath    <- config.baseFolderPath.liftTo[F](new Exception("Unable to retreive baseFolderPath"))
-      projectFolderPath  = baseFolderPath.resolve("projects")
       scriptFolderPath  <- config.baseFolderPath.liftTo[F](new Exception("Unable to retreive baseFolderPath"))
       routes          = HttpRoutes.of[F]({
         case POST -> Root / "projects" :? ProjectNameQueryParamMatcher(projectName) =>
           for {
-            project  <- Project.init[F](projectFolderPath, scriptFolderPath, projectName)
+            project  <- Project.init[F](baseFolderPath, scriptFolderPath, projectName)
             response  = Response[F](status = Status.Ok)
           } yield response
 
         case DELETE -> Root / "projects" / projectName =>
           for {
-            project  <- Project.lookUp[F](projectFolderPath, projectName)
+            project  <- Project.lookUp[F](baseFolderPath, projectName)
             _        <- project.trash
             response  = Response[F](status = Status.Ok)
           } yield response
