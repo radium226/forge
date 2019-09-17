@@ -11,7 +11,7 @@ class Runner[F[_]](folderPath: Path, kinds: List[Kind]) {
 
   def run(phase: Phase)(implicit F: Concurrent[F]): F[Unit] = {
     kinds.traverse({ kind =>
-      kind.run[F](folderPath).applyOrElse(phase, { _ => F.unit })
+      kind.run[F](folderPath).applyOrElse[Phase, F[Unit]](phase, { _ => F.unit })
     }).void
   }
 
