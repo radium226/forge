@@ -20,6 +20,7 @@ import com.github.radium226.forge.server.route.{GitRoutes, HookRoutes, ProjectRo
 import org.http4s.implicits._
 import cats.implicits._
 import com.github.radium226.forge.model.Hook
+import com.github.radium226.forge.run.{Phase, Runner}
 import fs2.concurrent.Queue
 
 object Main extends IOApp with ConfigSupport {
@@ -43,10 +44,20 @@ object Main extends IOApp with ConfigSupport {
     ).sequence.map(_.reduceK)
   }
 
+  def build(project: Project[IO]): IO[Unit] = {
+    val runnerFolderPath = project.folderPath.resolve("runner")
+    for {
+      _      <- IO(Files.createDirectories(runnerFolderPath))
+      _      <- project.repo.cloneTo(runnerFolderPath)
+      runner <- Runner[IO](runnerFolderPath)
+      _      <- runner.run(Phase.Package)
+    } yield ()
+  }
+
   def triggerBuild(config: Config[IO], hookQueue: Queue[IO, Hook[IO]]): Resource[IO, Unit] = {
     Resource.liftF(hookQueue.dequeue
       .evalMap({ hook =>
-        IO(println(s" ------> We need to build ${hook} <------"))
+        build(hook.project)
       })
       .compile
       .drain

@@ -39,6 +39,7 @@ object Repo {
 
 
 case class Repo[F[_]](folderPath: Path, bare: Boolean) {
+  self =>
 
   def linkHook(hookName: HookName, scriptFilePath: Path)(implicit F: Sync[F]): F[Unit] = {
     F.delay(Files.createSymbolicLink(folderPath.resolve("hooks").resolve(hookName), scriptFilePath))
@@ -67,6 +68,10 @@ case class Repo[F[_]](folderPath: Path, bare: Boolean) {
 
   def updateConfig(configs: Config*)(implicit F: Sync[F]): F[Unit] = {
     configs.toList.traverse[F, Unit](updateConfig).void
+  }
+
+  def cloneTo(folderPath: Path)(implicit F: Sync[F]): F[Repo[F]] = {
+    Executor[F].execute("git", "clone", self.folderPath.toString, folderPath.toString).foreground.as(Repo[F](folderPath, false))
   }
 
 }
