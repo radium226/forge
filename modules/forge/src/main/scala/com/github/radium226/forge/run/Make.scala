@@ -9,7 +9,7 @@ import scala.util.matching.Regex
 
 import cats.implicits._
 
-case object Make extends Kind {
+case object Make extends Kind with CommandSupport {
 
   override def fileNameRegex: Regex = "^Makefile$".r
 
@@ -19,10 +19,6 @@ case object Make extends Kind {
 
     case Phase.Package =>
       List("make", "package")
-  }
-
-  override def run[F[_]](folderPath: Path)(implicit F: Concurrent[F]) = {
-    command.andThen(Executor[F](workingFolderPath = Some(folderPath)).execute(_ :_*).foreground.void)
   }
 
 }

@@ -6,13 +6,13 @@ import cats.effect.Concurrent
 
 import scala.util.matching.Regex
 
-case object Sbt extends Kind {
+case object Sbt extends Kind with CommandSupport {
 
   override def fileNameRegex: Regex = "^build.sbt$".r
 
-  override def run[F[_]](folderPath: Path)(implicit F: Concurrent[F]) = {
+  override def command = {
     case Phase.Clean =>
-      F.unit
+      List("sbt", "clean")
   }
 
 }
