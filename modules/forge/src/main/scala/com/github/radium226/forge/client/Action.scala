@@ -8,7 +8,8 @@ object Action {
 
   case class Init(
     folderPath: Path,
-    projectName: String
+    projectName: String,
+    templateProjectName: Option[String]
   )  extends Action
 
   object Init {
@@ -16,7 +17,8 @@ object Action {
     def default: Init = {
       Init(
         folderPath = Paths.get(System.getProperty("user.dir")),
-        projectName = Paths.get(System.getProperty("user.dir")).getFileName.toString
+        projectName = Paths.get(System.getProperty("user.dir")).getFileName.toString,
+        templateProjectName = None
       )
     }
 
@@ -28,6 +30,8 @@ object Action {
     hookName: Option[String],
     projectName: String
   ) extends Action
+
+  case object UpdateTemplate extends Action
 
   object EmitHook {
 

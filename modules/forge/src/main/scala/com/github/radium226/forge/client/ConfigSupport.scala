@@ -26,7 +26,8 @@ trait ConfigSupport extends ScoptImplicits with FicusImplicits {
       Config[F](
         port = config.port.orElse(fallbackConfig.port),
         host = config.host.orElse(fallbackConfig.host),
-        action = config.action
+        action = config.action,
+        folderPath = config.folderPath
       )
     }
   }
@@ -67,6 +68,11 @@ trait ConfigSupport extends ScoptImplicits with FicusImplicits {
             config.copy(port = Some(port))
           })
           .optional(),
+        opt[Path]("folder-path")
+          .action({ (folderPath, config) =>
+            config.copy(folderPath = folderPath)
+          })
+          .optional(),
         opt[String]("host")
           .action({ (host, config) =>
             config.copy(host = Some(host))
@@ -82,6 +88,14 @@ trait ConfigSupport extends ScoptImplicits with FicusImplicits {
                 config.copyAction({
                   case action: Action.Init =>
                     action.copy(projectName = projectName)
+                })
+              })
+              .optional(),
+            opt[String]("template-project-name")
+              .action({ (templateProjectName, config) =>
+                config.copyAction({
+                  case action: Action.Init =>
+                    action.copy(templateProjectName = Some(templateProjectName))
                 })
               })
               .optional()

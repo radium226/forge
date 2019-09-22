@@ -6,6 +6,8 @@ package object git {
 
   type RemoteName = String
 
+  type BranchName = String
+
   type Content = String
 
   type ConfigKey = String
@@ -13,5 +15,7 @@ package object git {
   type ConfigValue = String
 
   type Config = (ConfigKey, ConfigValue)
+
+  type RepoUrl = String
 
 }

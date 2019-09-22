@@ -1,10 +1,13 @@
 package com.github.radium226.forge.client
 
+import java.nio.file.Paths
+
 import cats._
 import cats.data._
 import cats.effect._
 import com.github.radium226.forge.config.ConfigBuilder
 import cats.implicits._
+import com.github.radium226.forge.project.Project
 import org.http4s.{Method, Request, Uri}
 import org.http4s.blaze.http.HttpClient
 import org.http4s.client.blaze.BlazeClientBuilder
@@ -40,7 +43,7 @@ object Main extends IOApp with ConfigSupport {
       case Help =>
         IO(println("THIS IS THE HELP! "))
 
-      case Init(folderPath, projectName) =>
+      case Init(folderPath, projectName, templateProjectName) =>
         BlazeClientBuilder[IO](ExecutionContext.global).resource.use({ client =>
           for {
             // We create the project
@@ -57,19 +60,35 @@ object Main extends IOApp with ConfigSupport {
             _         <- repo.git("add", "--all")
             _         <- repo.git("commit", "--message", s"Init the ${projectName} project! ")
             _         <- repo.git("push", "--set-upstream", "origin", "master")
+
+            // We add the template if needed
+            /*_         <- templateProjectName.map({ templateProjectName =>
+              templateProject <- Project.lookUp()
+              repo.addRemote("template", )
+            }).getOrElse(IO.unit)*/
           } yield ()
         })
 
       case EmitHook(Some(hookName), projectName) =>
         BlazeClientBuilder[IO](ExecutionContext.global).resource.use({ client =>
           for {
-            port      <- config.port.liftTo[IO](new Exception("Unable to retrieve port"))
-            host      <- config.host.liftTo[IO](new Exception("Unable to retrieve host"))
-            baseUri   <- Uri.fromString(s"http://${host}:${port}").liftTo[IO]
-            uri        = baseUri.withPath(s"/projects/${projectName}/hooks/${hookName}")
-            _         <- client.expect[Unit](Request[IO](uri = uri, method = Method.PUT))
+            port    <- config.port.liftTo[IO](new Exception("Unable to retrieve port"))
+            host    <- config.host.liftTo[IO](new Exception("Unable to retrieve host"))
+            baseUri <- Uri.fromString(s"http://${host}:${port}").liftTo[IO]
+            uri      = baseUri.withPath(s"/projects/${projectName}/hooks/${hookName}")
+            _       <- client.expect[Unit](Request[IO](uri = uri, method = Method.PUT))
           } yield ()
         })
+
+      /*case UpdateTemplate =>
+        val repoFolderPath = Paths.get("")
+        repo <- Repo.in[IO](repoFolderPath)
+        _    <- repo.fetch("template")
+        _    <- repo.rebase(
+          branchName = "master",
+          remoteName = Some("template")
+        )*/
+
       case _ =>
         IO(???)
     }

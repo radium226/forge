@@ -34,6 +34,13 @@ object Repo {
     } yield Repo[F](folderPath, bare = bare)
   }
 
+  def clone[F[_]](url: RepoUrl, folderPath: Path)(implicit F: Sync[F]): F[Repo[F]] = {
+    for {
+      _    <- Executor[F].execute("git", "clone", url, folderPath.toString).foreground
+      repo <- Repo.in(folderPath)
+    } yield repo
+  }
+
 }
 
 
@@ -43,6 +50,12 @@ case class Repo[F[_]](folderPath: Path, bare: Boolean) {
 
   def linkHook(hookName: HookName, scriptFilePath: Path)(implicit F: Sync[F]): F[Unit] = {
     F.delay(Files.createSymbolicLink(folderPath.resolve("hooks").resolve(hookName), scriptFilePath))
+  }
+
+  def add(magnet: AddMagnet[F])(implicit F: Sync[F]): F[Unit] = {
+    magnet.filePathsToAdd(folderPath).flatMap({ filePaths =>
+      git(List("add") ++ filePaths.map(_.toString): _*)
+    })
   }
 
   def addRemote(name: RemoteName, uri: Uri)(implicit F: Sync[F]): F[Unit] = {
@@ -72,6 +85,26 @@ case class Repo[F[_]](folderPath: Path, bare: Boolean) {
 
   def cloneTo(folderPath: Path)(implicit F: Sync[F]): F[Repo[F]] = {
     Executor[F].execute("git", "clone", self.folderPath.toString, folderPath.toString).foreground.as(Repo[F](folderPath, false))
+  }
+
+  def fetch(remoteName: RemoteName)(implicit F: Sync[F]): F[Unit] = {
+    git("fetch", remoteName)
+  }
+
+  def rebase(branchName: BranchName, remoteName: Option[RemoteName] = None)(implicit F: Sync[F]): F[Unit] = {
+    git("rebase", remoteName.map(_.concat("/").concat(branchName)).getOrElse(branchName))
+  }
+
+  def commit(message: String)(implicit F: Sync[F]): F[Unit] = {
+    git("commit", "-m", message)
+  }
+
+  def push(remoteName: RemoteName)(implicit F: Sync[F]): F[Unit] = {
+    git("push", remoteName)
+  }
+
+  def pull(remoteName: RemoteName)(implicit F: Sync[F]): F[Unit] = {
+    git("pull", remoteName)
   }
 
 }

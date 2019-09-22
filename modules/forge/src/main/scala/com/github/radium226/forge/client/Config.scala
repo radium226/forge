@@ -1,10 +1,11 @@
 package com.github.radium226.forge.client
 
-import com.google.common.net.HostAndPort
+import java.nio.file.{Path, Paths}
 
 case class Config[F[_]](
   port: Option[Int] = None,
   host: Option[String] = None,
+  folderPath: Path = Paths.get(System.getProperty("user.dir")),
   action: Action = Action.Help
 ) {
 
