@@ -2,18 +2,30 @@ import sbt._
 
 object Dependencies {
 
+  lazy val shapeless = Seq(
+    "com.chuusai" %% "shapeless" % "2.3.3"
+  )
+
+  lazy val simulacrum = Seq(
+    "com.github.mpilquist" %% "simulacrum" % "0.19.0"
+  )
+
   lazy val cats = Seq(
-    "org.typelevel" %% "cats-core" % "1.5.0",
-    "org.typelevel" %% "cats-effect" % "1.1.0"
+    "org.typelevel" %% "cats-core" % "2.0.0",
+    "org.typelevel" %% "cats-effect" % "2.0.0"
+  )
+
+  lazy val kittens = Seq(
+    "org.typelevel" %% "kittens" % "2.0.0"
   )
 
   lazy val dbus = Seq(
-    "com.github.hypfvieh" % "dbus-java" % "3.0.0",
+    "com.github.hypfvieh" % "dbus-java" % "3.0.0"
   )
 
   lazy val fs2 = Seq(
-    "co.fs2" %% "fs2-core" % "1.0.2",
-    "co.fs2" %% "fs2-io" % "1.0.2"
+    "co.fs2" %% "fs2-core" % "2.0.1",
+    "co.fs2" %% "fs2-io" % "2.0.1"
   )
 
   lazy val logback = Seq(
@@ -36,10 +48,10 @@ object Dependencies {
   )
 
   lazy val http4s = Seq(
-    "org.http4s" %% "http4s-core" % "0.20.2",
-    "org.http4s" %% "http4s-dsl" % "0.20.2",
-    "org.http4s" %% "http4s-blaze-server" % "0.20.2",
-    "org.http4s" %% "http4s-blaze-client" % "0.20.2"
+    "org.http4s" %% "http4s-core" % "0.20.11",
+    "org.http4s" %% "http4s-dsl" % "0.20.11",
+    "org.http4s" %% "http4s-blaze-server" % "0.20.11",
+    "org.http4s" %% "http4s-blaze-client" % "0.20.11"
   )
 
   lazy val xtract = Seq(

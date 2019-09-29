@@ -51,7 +51,16 @@ lazy val root = (project in file("modules/forge"))
     libraryDependencies ++= Dependencies.config,
     libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13"
   )
-    .dependsOn(`system`, `http4s-fastcgi`)
+    .dependsOn(`system`, `http4s-fastcgi`, `config`)
+
+lazy val `config` = (project in file("modules/config"))
+  .settings(
+    name := "config",
+    libraryDependencies ++= Dependencies.cats,
+    libraryDependencies ++= Dependencies.kittens,
+    libraryDependencies ++= Dependencies.simulacrum,
+    libraryDependencies ++= Dependencies.shapeless
+  )
 
 lazy val `system` = RootProject(uri("../system-scala"))
 
