@@ -59,7 +59,8 @@ lazy val `config` = (project in file("modules/config"))
     libraryDependencies ++= Dependencies.cats,
     libraryDependencies ++= Dependencies.kittens,
     libraryDependencies ++= Dependencies.simulacrum,
-    libraryDependencies ++= Dependencies.shapeless
+    libraryDependencies ++= Dependencies.shapeless,
+    libraryDependencies ++= Dependencies.scopt
   )
 
 lazy val `system` = RootProject(uri("../system-scala"))
