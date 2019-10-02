@@ -55,16 +55,18 @@ object WhatIsDecline extends App {
 
   object OptsMaker extends ProvideOpts0 {
 
-    implicit def actionOptsMaker[A <: Action, ReprA <: HList](
-      implicit classTagA: ClassTag[A], labelledGeneric: LabelledGeneric.Aux[A, ReprA], optsMakerReprA: Lazy[OptsMaker[ReprA]]
-    ): OptsMaker[A] = new OptsMaker[A] {
+    implicit def hconsOptsMaker2[HeadReprKey <: Symbol, HeadReprValue, TailRepr <: HList](
+      implicit headReprKeyWitness: Witness.Aux[HeadReprKey], tailReprOptsMaker: OptsMaker[TailRepr], headReprValueOptsMaker: Lazy[OptsMaker[HeadReprValue]], headReprValueClassTag: ClassTag[HeadReprValue]
+    ): OptsMaker[FieldType[HeadReprKey, HeadReprValue] :: TailRepr] = new OptsMaker[FieldType[HeadReprKey, HeadReprValue] :: TailRepr] {
 
-      override implicit def makeOpts: Opts[A] = {
-        val name = classTagA.runtimeClass.getSimpleName
-        println(s"Now, we are here for the ${classTagA.runtimeClass.getSimpleName} action")
-        Opts.subcommand(name, help = name) {
-          optsMakerReprA.value.makeOpts.map({ reprA => labelledGeneric.from(reprA) })
-        }
+
+      override implicit def makeOpts: Opts[FieldType[HeadReprKey, HeadReprValue] :: TailRepr] = {
+        val name = headReprValueClassTag.runtimeClass.getSimpleName
+        println(s"Now, we are here for the ${name} action")
+        (Opts.subcommand[HeadReprValue](name, help = name)(headReprValueOptsMaker.value.makeOpts), tailReprOptsMaker.makeOpts)
+        .mapN({ (headReprValue, tailReprValue) =>
+          field[HeadReprKey](headReprValue) :: tailReprValue
+        })
       }
 
     }
@@ -81,7 +83,7 @@ object WhatIsDecline extends App {
 
   case class Delete(id: Int, force: Boolean) extends Action
 
-  case class Config(dryRun: Boolean, action: Action)
+  case class Config(dryRun: Boolean, action: Create)
 
   val dryRun = Opts.flag("dry-run", "Dry Run").map({ _ => true }).withDefault(false)
 
@@ -93,12 +95,16 @@ object WhatIsDecline extends App {
 
   val delete = Opts.subcommand[Action]("delete", "Delete")((id, force).mapN(Delete.apply))
 
-  val config = (dryRun, create orElse delete).mapN(Config.apply)
+  //val config = (dryRun, create orElse delete).mapN(Config.apply)
 
-  val command = Command("Yay", header = "Yay")(config)
+  //val command = Command("Yay", header = "Yay")(config)
 
-  println(command.parse(List("--dry-run", "delete", "--id=12")))
+  //println(command.parse(List("--dry-run", "delete", "--id=12")))
 
-  println(Generic[Action])
+  //println(OptsMaker.makeOpts[Config])
+
+  val config = Config(true, Create(1))
+
+  println(LabelledGeneric[Config].to(config))
 
 }
