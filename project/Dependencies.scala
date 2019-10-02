@@ -41,6 +41,10 @@ object Dependencies {
     "com.github.scopt" %% "scopt" % "4.0.0-RC2",
   )
 
+  lazy val decline = Seq(
+    "com.monovore" %% "decline" % "1.0.0"
+  )
+
   lazy val akkaStream = Seq(
     "com.typesafe.akka" %% "akka-stream" % "2.5.19",
     "com.typesafe.akka" %% "akka-stream-contrib" % "0.9",
