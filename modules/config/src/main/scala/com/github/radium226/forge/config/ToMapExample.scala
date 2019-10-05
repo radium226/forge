@@ -18,14 +18,6 @@ object ToMapExample extends App {
 
   trait DescribePriority0 {
 
-    implicit def describeLabelledGeneric[A, ReprA <: HList](
-      implicit labelledGeneric: LabelledGeneric.Aux[A, ReprA], describeReprA: Describe[ReprA]
-    ): Describe[A] = new Describe[A] {
-
-      override def apply: Description = describeReprA.apply
-
-    }
-
     implicit def describeHNil: Describe[HNil] = new Describe[HNil] {
 
       override def apply: Description = Map.empty
@@ -49,20 +41,36 @@ object ToMapExample extends App {
   trait DescribePriority1 extends DescribePriority0 {
 
     implicit def describeHConsWithDescribeInHead[ReprAHeadKey <: Symbol, ReprAHeadValue, ReprATail <: HList](
-      implicit reprAHeadKeyWitness: Witness.Aux[ReprAHeadKey], describeReprAHeadValue: Describe[ReprAHeadValue], describeReprATail: Describe[ReprATail], reprAHeadValueClassTag: ClassTag[ReprAHeadValue]
+      implicit reprAHeadKeyWitness: Witness.Aux[ReprAHeadKey], describeReprAHeadValue: Describe[ReprAHeadValue], describeReprATail: Lazy[Describe[ReprATail]], reprAHeadValueClassTag: ClassTag[ReprAHeadValue]
     ): Describe[FieldType[ReprAHeadKey, ReprAHeadValue] :: ReprATail] = new Describe[FieldType[ReprAHeadKey, ReprAHeadValue] :: ReprATail] {
 
       override def apply: Description = {
         val name: String = reprAHeadKeyWitness.value.name
         val description = describeReprAHeadValue.apply
-        describeReprATail.apply + (name -> description)
+        describeReprATail.value.apply + (name -> description)
       }
 
     }
 
   }
 
+  trait DescribePriority2 extends DescribePriority1 {
+
+    implicit def describeHConsWithCoproduct[K <: Symbol, H, ReprH <: Coproduct, T <: HList](
+
+    ): Describe[ReprH]
+
+  }
+
   object describe extends DescribePriority1 {
+
+    implicit def describeLabelledGeneric[A, ReprA <: HList](
+      implicit labelledGeneric: LabelledGeneric.Aux[A, ReprA], describeReprA: Describe[ReprA]
+    ): Describe[A] = new Describe[A] {
+
+      override def apply: Description = describeReprA.apply
+
+    }
 
     def apply[A](implicit describeA: Describe[A]): Description = describeA.apply
 
@@ -70,9 +78,17 @@ object ToMapExample extends App {
 
   import describe._
 
-  case class Nested(double: Double)
+  sealed trait Action
 
-  case class Config(int: Int, string: String, nested: Nested)
+  case object Create extends Action
+
+  case object Delete extends Action
+
+  case class SubNested(float: Float)
+
+  case class Nested(double: Double, subNested: SubNested)
+
+  case class Config(int: Int, string: String, action: Action)
 
   println(describe[Config])
 

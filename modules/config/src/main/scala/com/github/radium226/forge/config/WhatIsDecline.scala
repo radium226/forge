@@ -103,8 +103,8 @@ object WhatIsDecline extends App {
 
   //println(OptsMaker.makeOpts[Config])
 
-  val config = Config(true, Create(1))
+  //val config = Config(true, Create(1))
 
-  println(LabelledGeneric[Config].to(config))
+  //println(LabelledGeneric[Config].to(config))
 
 }
