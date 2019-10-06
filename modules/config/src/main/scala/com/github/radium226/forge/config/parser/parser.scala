@@ -6,6 +6,8 @@ import shapeless._
 import com.typesafe.config.{Config => TypesafeConfig, ConfigFactory => TypesafeConfigFactory}
 import shapeless.labelled._
 
+import cats.implicits._
+
 import java.nio.file.Path
 
 import scala.util.Try
@@ -19,7 +21,7 @@ trait Parse[C] {
 class Entries(config: TypesafeConfig, pathOption: Option[String]) {
   self =>
 
-  def in(path: String): Entries = {
+  def at(path: String): Entries = {
     new Entries(config, Some(path))
   }
 
@@ -53,19 +55,36 @@ trait LowPriorityParserInstances {
   implicit def hnilParser: Parse[HNil] = { (_, _) => Right(HNil) }
 
   implicit def hconsParser[ReprCHeadKey <: Symbol, ReprCHeadValue, ReprCTail <: HList](implicit
-    reprCHeadValueParser: Parse[ReprCHeadValue],
-    reprCTailParser: Parse[ReprCTail],
+    parseReprCHeadValue: Parse[ReprCHeadValue],
+    parseReprCTail: Parse[ReprCTail],
     reprCHeadKeyWitness: Witness.Aux[ReprCHeadKey]
   ): Parse[FieldType[ReprCHeadKey, ReprCHeadValue] :: ReprCTail] = { (parentConfig, pathOption) =>
     for {
-      reprCHeadValue <- reprCHeadValueParser(parentConfig, Some(s"${pathOption.map({ path => s"${path}."}).getOrElse("")}${reprCHeadKeyWitness.value.name}"))
-      reprCTail      <- reprCTailParser(parentConfig, pathOption)
+      reprCHeadValue <- parseReprCHeadValue(parentConfig, Some(s"${pathOption.map({ path => s"${path}."}).getOrElse("")}${reprCHeadKeyWitness.value.name}"))
+      reprCTail      <- parseReprCTail(parentConfig, pathOption)
     } yield field[ReprCHeadKey](reprCHeadValue) :: reprCTail
   }
 
 }
 
 trait ParserInstances extends LowPriorityParserInstances {
+
+  implicit def optionParser[A](implicit
+    parseA: Parse[A]
+  ): Parse[Option[A]] = { (config, pathOption) =>
+    pathOption match {
+      case Some(path) =>
+        if (config.hasPath(path)) parseA(config, pathOption).map(_.some)
+        else Right(None)
+
+      case None =>
+        parseA(config, pathOption)
+          .fold(
+            { _ => Right(none[A]) },
+            _.some.asRight[ConfigError]
+          )
+    }
+  }
 
   implicit def stringParser: Parse[String] = { (config, pathOption) =>
     pathOption match {

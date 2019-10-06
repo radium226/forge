@@ -1,6 +1,7 @@
 package com.github.radium226.forge.config
 
 import cats.implicits._
+import com.github.radium226.forge.config.parser._
 import shapeless._
 
 object OneLastTry extends App {
@@ -38,7 +39,7 @@ object OneLastTry extends App {
   trait LowPriorityPartialConfigInstances {
 
     implicit def genericConfig[Complete, ReprComplete <: HList, Partial0 <: HList](implicit
-      generic: Generic.Aux[Complete, ReprComplete],
+      generic: LabelledGeneric.Aux[Complete, ReprComplete],
       partialConfig: PartialConfig.Aux[ReprComplete, Partial0]
     ): PartialConfig.Aux[Complete, Partial0] = new PartialConfig[Complete] {
 
@@ -272,6 +273,8 @@ object OneLastTry extends App {
 
     def complete(partial: Partial): ConfigResult[Complete]
 
+    def load(systemContent: String, userContent: String): ConfigResult[Complete]
+
   }
 
   object Config {
@@ -283,7 +286,8 @@ object OneLastTry extends App {
   trait LowPriorityConfigInstances {
 
     implicit def defaultConfig[Complete, Partial <: HList](implicit
-      partialConfig: PartialConfig.Aux[Complete, Partial]
+      partialConfig: PartialConfig.Aux[Complete, Partial],
+      parsePartial: Parse[Partial],
     ): Config[Complete] = new Config[Complete] {
 
       type Partial = partialConfig.Partial
@@ -294,6 +298,16 @@ object OneLastTry extends App {
 
       override def complete(partial: Partial): ConfigResult[Complete] = {
         partialConfig.to(partial)
+      }
+
+      override def load(systemContent: String, userContent: String): ConfigResult[Complete] = {
+        for {
+          entries     <- List(systemContent, userContent).traverse(Entries.apply)
+          partials    <- entries.traverse(_.as[Partial])
+          emptyPatial <- partialConfig.empty
+          partial     <- partials.foldM(emptyPatial)({ (a, b) => partialConfig.merge(a, b) })
+          complete    <- partialConfig.to(partial)
+        } yield complete
       }
 
     }
@@ -309,15 +323,31 @@ object OneLastTry extends App {
                       with EmptyInstances
                       with MergeInstances
                       with ConfigInstances
+                      with ParserInstances
 
   // Test
   import instances._
 
-  case class Example(value: String)
+  case class Example(bim: String)
 
   val example = Example("Coucou! ")
 
+  val system =
+    """{
+      | bim: 'Coucou'
+      |}
+      |""".stripMargin
+
+  val user =
+    """
+      |{
+      | bam: 'Kiki'
+      |}
+      |""".stripMargin
+
   val config = Config.of[Example]
+
+  //println(config.load(system, user))
 
   println(for {
     p <- config.partial(example)

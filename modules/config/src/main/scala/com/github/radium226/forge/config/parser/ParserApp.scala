@@ -2,7 +2,9 @@ package com.github.radium226.forge.config.parser
 
 object ParserApp extends App with ParserInstances {
 
-  case class Toto(tata: String)
+  case class Toto(tata: String, titi: Option[String])
+
+  case class Titou(papo: String)
 
   val result = for {
     entries       <- Entries(
@@ -12,8 +14,9 @@ object ParserApp extends App with ParserInstances {
         |""".stripMargin)
 
     rootToto      <- entries.as[Toto]
-    subToto       <- entries.in("toto").as[Toto]
-  } yield (rootToto, subToto)
+    t             <- entries.as[Option[Titou]]
+    subToto       <- entries.at("toto").as[Toto]
+  } yield (rootToto, subToto, t)
 
   println(result)
 
