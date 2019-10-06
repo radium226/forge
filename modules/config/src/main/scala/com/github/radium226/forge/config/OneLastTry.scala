@@ -12,16 +12,16 @@ object OneLastTry extends App {
 
   type ConfigResult[C] = Either[ConfigError, C]
 
-  // Config
+  // PartialConfig
   trait PartialConfig[Complete] {
 
     type Partial
 
-    //def toPartial(complete: Complete): ConfigResult[Partial]
-
     def empty: ConfigResult[Partial]
 
-    def complete(partial: Partial): ConfigResult[Complete]
+    def from(complete: Complete): ConfigResult[Partial]
+
+    def to(partial: Partial): ConfigResult[Complete]
 
     def merge(onePartial: Partial, otherPartial: Partial): ConfigResult[Partial]
 
@@ -31,58 +31,64 @@ object OneLastTry extends App {
 
     type Aux[Complete0, Partial0] = PartialConfig[Complete0] { type Partial = Partial0 }
 
+    def apply[Complete](implicit partialConfig: PartialConfig[Complete]): PartialConfig[Complete] = partialConfig
+
   }
 
   trait LowPriorityPartialConfigInstances {
 
-    implicit def genericConfig[Complete, ReprComplete <: HList](implicit
+    implicit def genericConfig[Complete, ReprComplete <: HList, Partial0 <: HList](implicit
       generic: Generic.Aux[Complete, ReprComplete],
-      partialConfig: PartialConfig[ReprComplete]
-    ): PartialConfig[Complete] = new PartialConfig[Complete] {
+      partialConfig: PartialConfig.Aux[ReprComplete, Partial0]
+    ): PartialConfig.Aux[Complete, Partial0] = new PartialConfig[Complete] {
 
-      override type Partial = partialConfig.Partial
+      override type Partial = Partial0
 
-      override def toComplete(partial: Partial): ConfigResult[Complete] = {
-        config.toComplete(partial).map(generic.from(_))
+      override def to(partial: Partial): ConfigResult[Complete] = {
+        partialConfig.to(partial).map(generic.from(_))
       }
 
-      override def emptyPartial: ConfigResult[Partial] = {
-        config.emptyPartial
+      override def from(complete: Complete): ConfigResult[Partial] = {
+        partialConfig.from(generic.to(complete))
       }
 
-      override def mergePartials(onePartial: Partial, otherPartial: Partial): ConfigResult[Partial] = {
-        config.mergePartials(onePartial, otherPartial)
+      override def empty: ConfigResult[Partial] = {
+        partialConfig.empty
+      }
+
+      override def merge(onePartial: Partial, otherPartial: Partial): ConfigResult[Partial] = {
+        partialConfig.merge(onePartial, otherPartial)
       }
 
     }
 
   }
 
-  trait ConfigInstances extends LowPriorityConfigInstances {
+  trait PartialConfigInstances extends LowPriorityPartialConfigInstances {
 
     implicit def hlistConfig[Complete <: HList, Partial <: HList](implicit
       toPartialInstance: ToPartial.Aux[Complete, Partial],
       toCompleteInstance: ToComplete.Aux[Partial, Complete],
       emptyPartialInstance: Empty[Partial],
       mergeInstance: Merge[Partial]
-    ): Config[Complete] = new Config[Complete] {
+    ): PartialConfig.Aux[Complete, Partial] = new PartialConfig[Complete] {
 
       override type Partial = toPartialInstance.Output
 
-      override def toPartial(complete: Complete): ConfigResult[Partial] = {
-        toPartialInstance.apply(complete)
-      }
-
-      override def toComplete(partial: Partial): ConfigResult[Complete] = {
+      override def to(partial: Partial): ConfigResult[Complete] = {
         toCompleteInstance.apply(partial)
       }
 
-      override def emptyPartial: ConfigResult[Partial] = {
-        empty[Partial]
+      override def from(complete: Complete): ConfigResult[Partial] = {
+        toPartialInstance.apply(complete)
       }
 
-      override def mergePartials(onePartial: Partial, otherPartial: Partial): ConfigResult[Partial] = {
-        merge[Partial](onePartial, otherPartial)
+      override def empty: ConfigResult[Partial] = {
+        emptyPartialInstance.apply
+      }
+
+      override def merge(onePartial: Partial, otherPartial: Partial): ConfigResult[Partial] = {
+        mergeInstance.apply(onePartial, otherPartial)
       }
 
     }
@@ -257,12 +263,52 @@ object OneLastTry extends App {
 
   }
 
+  // Config
+  trait Config[Complete] {
+
+    type Partial
+
+    def partial(complete: Complete): ConfigResult[Partial]
+
+    def complete(partial: Partial): ConfigResult[Complete]
+
+  }
+
+  object Config {
+
+    def of[A](implicit config: Config[A]): Config[A] = config
+
+  }
+
+  trait LowPriorityConfigInstances {
+
+    implicit def defaultConfig[Complete, Partial <: HList](implicit
+      partialConfig: PartialConfig.Aux[Complete, Partial]
+    ): Config[Complete] = new Config[Complete] {
+
+      type Partial = partialConfig.Partial
+
+      override def partial(complete: Complete): ConfigResult[Partial] = {
+        partialConfig.from(complete)
+      }
+
+      override def complete(partial: Partial): ConfigResult[Complete] = {
+        partialConfig.to(partial)
+      }
+
+    }
+
+  }
+
+  trait ConfigInstances extends LowPriorityConfigInstances
+
   // Assemble
-  object instances extends ConfigInstances
+  object instances extends PartialConfigInstances
                       with ToPartialInstances
                       with ToCompleteInstances
                       with EmptyInstances
                       with MergeInstances
+                      with ConfigInstances
 
   // Test
   import instances._
@@ -273,11 +319,16 @@ object OneLastTry extends App {
 
   val config = Config.of[Example]
 
-  println(config.emptyPartial)
+  println(for {
+    p <- config.partial(example)
+    c <- config.complete(p)
+  } yield (p, c))
 
-  for {
-    partial  <- config.toPartial(example)
-    complete <- config.toComplete(partial)
-  } yield assert(complete == example)
+  /*println(partialConfig.empty)
+
+  println(for {
+    partial  <- partialConfig.empty
+    complete <- partialConfig.complete(partial)
+  } yield complete)*/
 
 }
