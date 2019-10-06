@@ -32,6 +32,10 @@ object Dependencies {
     "ch.qos.logback" % "logback-classic" % "1.2.3"
   )
 
+  /*lazy val guava = Seq(
+    "com.google.guava" % "guava" % "28.1-jre"
+  )*/
+
   lazy val config = Seq(
     "com.typesafe" % "config" % "1.3.4",
     "com.iheart" %% "ficus" % "1.4.3"

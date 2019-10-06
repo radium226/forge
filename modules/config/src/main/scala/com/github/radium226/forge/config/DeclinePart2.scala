@@ -97,7 +97,7 @@ object DeclinePart2 extends App {
 
     implicit def makeOptionHNil: MakeOption[HNil] = MakeOption.instance(Opts.unit.map({ _ => HNil }))
 
-    implicit def makeOptionHCons[ReprAHeadKey <: Symbol, ReprAHeadValue, ReprATail <: HList](
+    implicit def makeOptionHConsOptionCase[ReprAHeadKey <: Symbol, ReprAHeadValue, ReprATail <: HList](
       implicit makeOptionReprATail: MakeOption[ReprATail], reprAHeadKeyWitness: Witness.Aux[ReprAHeadKey], reprAHeadValueArgument: Argument[ReprAHeadValue]
     ): MakeOption[FieldType[ReprAHeadKey, ReprAHeadValue] :: ReprATail] = MakeOption.instance({
       val name = reprAHeadKeyWitness.value.name
@@ -107,10 +107,21 @@ object DeclinePart2 extends App {
           })
     })
 
+    implicit def makeOptionHConsSubcommandCase[ReprAHeadKey <: Symbol, ReprAHeadValue, ReprATail <: HList](implicit
+      makeOptionReprATail: MakeOption[ReprATail],
+      reprAHeadKeyWitness: Witness.Aux[ReprAHeadKey],
+      makeSubcommandReprAHeadValue: MakeSubcommand[ReprAHeadValue]
+    ): MakeOption[FieldType[ReprAHeadKey, ReprAHeadValue] :: ReprATail] = MakeOption.instance({
+      val name = reprAHeadKeyWitness.value.name
+      (makeSubcommandReprAHeadValue.apply, makeOptionReprATail.apply)
+          .mapN({ (reprAHead, reprATail) =>
+            field[ReprAHeadKey](reprAHead) :: reprATail
+          })
+    })
+
   }
 
   trait MakeOptionPriority2 extends MakeOptionPriority1 {
-
 
   }
 
@@ -134,12 +145,12 @@ object DeclinePart2 extends App {
 
   case class Delete(id: Int) extends Action
 
-  case class Config(dryRun: Boolean, action: Action)
+  case class Config(maxSize: Int, action: Action)
 
-  val opts = makeSubcommand[Action]
+  val opts = makeOption[Config]
 
-  val command = Command(name = "fuck", header = "fuck")(opts)
+  val command = Command(name = "This is a test", header = "This is a test")(opts)
 
-  println(command.parse(List("Create", "--id=2", "--name=toto")))
+  println(command.parse(List("--maxSize", "2", "Create", "--id=2", "--name=toto")))
 
 }
