@@ -3,6 +3,7 @@ package com.github.radium226.forge.config
 import cats.implicits._
 import com.github.radium226.forge.config.parser._
 import shapeless._
+import shapeless.labelled._
 
 object OneLastTry extends App {
 
@@ -132,14 +133,15 @@ object OneLastTry extends App {
 
     }
 
-    implicit def hconsToPartial[Head, Tail <: HList, PartialTail <: HList](implicit
-      tailToPartial: ToPartial.Aux[Tail, PartialTail]
-    ): ToPartial.Aux[Head :: Tail, Partial[Head] :: PartialTail] = new ToPartial[Head :: Tail] {
+    implicit def hconsToPartial[HeadKey <: Symbol, HeadValue, Tail <: HList, PartialTail <: HList](implicit
+      tailToPartial: ToPartial.Aux[Tail, PartialTail],
+      headKeyWitness: Witness.Aux[HeadKey]
+    ): ToPartial.Aux[FieldType[HeadKey, HeadValue] :: Tail, FieldType[HeadKey, Partial[HeadValue]] :: PartialTail] = new ToPartial[FieldType[HeadKey, HeadValue] :: Tail] {
 
-      override type Output = Partial[Head] :: PartialTail
+      override type Output = FieldType[HeadKey, Partial[HeadValue]] :: PartialTail
 
-      override def apply(complete: Head :: Tail): ConfigResult[Output] = {
-        tailToPartial.apply(complete.tail).map(Option(complete.head) :: _)
+      override def apply(complete: FieldType[HeadKey, HeadValue] :: Tail): ConfigResult[Output] = {
+        tailToPartial.apply(complete.tail).map(field[HeadKey](Option(complete.head)) :: _)
       }
 
     }
@@ -171,18 +173,25 @@ object OneLastTry extends App {
 
     }
 
-    implicit def hconsToComplete[Head, PartialTail <: HList, Tail <: HList](implicit
-      tailToComplete: ToComplete.Aux[PartialTail, Tail]
-    ): ToComplete.Aux[Partial[Head] :: PartialTail, Head :: Tail] = new ToComplete[Partial[Head] :: PartialTail] {
+    implicit def hconsToComplete[HeadKey <: Symbol, HeadValue, PartialTail <: HList, Tail <: HList](implicit
+      tailToComplete: ToComplete.Aux[PartialTail, Tail],
+      headKeyWitness: Witness.Aux[HeadKey]
+    ): ToComplete.Aux[FieldType[HeadKey, Partial[HeadValue]] :: PartialTail, FieldType[HeadKey, HeadValue] :: Tail] = new ToComplete[FieldType[HeadKey, Partial[HeadValue]] :: PartialTail] {
 
-      override type Output = Head :: Tail
+      override type Output = FieldType[HeadKey, HeadValue] :: Tail
 
-      override def apply(partial: Partial[Head] :: PartialTail): ConfigResult[Output] = {
-        partial.head match {
+      override def apply(partial: FieldType[HeadKey, Partial[HeadValue]] :: PartialTail): ConfigResult[Output] = {
+        /*partial.head match {
           case Some(head) =>
-            tailToComplete.apply(partial.tail).map(head :: _)
+
           case None =>
             Left(ConfigError)
+        }*/
+        if (partial.head.isDefined) {
+          val head = partial.head.get
+          tailToComplete.apply(partial.tail).map(field[HeadKey](head) :: _)
+        } else {
+          Left(ConfigError)
         }
       }
 
@@ -223,9 +232,10 @@ object OneLastTry extends App {
 
     implicit def emptyHNil: Empty[HNil] = Empty.instance(Right(HNil))
 
-    implicit def emptyPartialHCons[Head, EmptyPartialTail <: HList](implicit
-      emptyPartialTail: Empty[EmptyPartialTail]
-    ): Empty[Partial[Head] :: EmptyPartialTail] = Empty.instance(emptyPartialTail.apply.map(none[Head] :: _))
+    implicit def emptyPartialHCons[HeadKey <: Symbol, HeadValue, EmptyPartialTail <: HList](implicit
+      emptyPartialTail: Empty[EmptyPartialTail],
+      headKeyWitness: Witness.Aux[HeadKey]
+    ): Empty[FieldType[HeadKey, Partial[HeadValue]] :: EmptyPartialTail] = Empty.instance(emptyPartialTail.apply.map(field[HeadKey](none[HeadValue]) :: _))
 
   }
 
@@ -256,10 +266,11 @@ object OneLastTry extends App {
 
     implicit def mergeHNil: Merge[HNil] = Merge.instance[HNil]({ (_, _) => Right(HNil) })
 
-    implicit def mergePartialHCons[Head, Tail <: HList](implicit
-      mergePartialTailInstance: Merge[Tail]
-    ): Merge[Partial[Head] :: Tail] = Merge.instance({ (a, b) =>
-      mergePartialTailInstance(a.tail, b.tail).map(a.head.orElse(b.head) :: _)
+    implicit def mergePartialHCons[HeadKey <: Symbol, HeadValue, Tail <: HList](implicit
+      mergePartialTailInstance: Merge[Tail],
+      headKeyWitness: Witness.Aux[HeadKey]
+    ): Merge[FieldType[HeadKey, Partial[HeadValue]] :: Tail] = Merge.instance({ (a, b) =>
+      mergePartialTailInstance(a.tail, b.tail).map(field[HeadKey](a.head.orElse(b.head)) :: _)
     })
 
   }
@@ -328,9 +339,9 @@ object OneLastTry extends App {
   // Test
   import instances._
 
-  case class Example(bim: String)
+  case class Example(bim: String, bam: String)
 
-  val example = Example("Coucou! ")
+  val example = Example("Coucou! ", "Caca")
 
   val system =
     """{
@@ -341,7 +352,7 @@ object OneLastTry extends App {
   val user =
     """
       |{
-      | bam: 'Kiki'
+      | ba2m: 'Kiki'
       |}
       |""".stripMargin
 
@@ -353,6 +364,8 @@ object OneLastTry extends App {
     p <- config.partial(example)
     c <- config.complete(p)
   } yield (p, c))
+
+  println(config.load(system, user))
 
   /*println(partialConfig.empty)
 
