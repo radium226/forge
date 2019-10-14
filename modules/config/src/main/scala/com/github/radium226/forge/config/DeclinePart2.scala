@@ -151,6 +151,7 @@ object DeclinePart2 extends App {
 
   val command = Command(name = "This is a test", header = "This is a test")(opts)
 
+
   println(command.parse(List("--maxSize", "2", "Create", "--id=2", "--name=toto")))
 
 }

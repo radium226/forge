@@ -7,6 +7,8 @@ import shapeless.syntax.singleton._
 import cats._
 import cats.implicits._
 
+import com.monovore.decline._
+
 
 class ConfigSpec extends AbstractConfigSpec with AllInstances with AllSyntax {
 
@@ -41,9 +43,19 @@ class ConfigSpec extends AbstractConfigSpec with AllInstances with AllSyntax {
   }
 
   it should "be able to parse configs" in {
-    case class Settings(minSize: Int, maxSize: Int)
+    @header(
+      """
+        |The main goal here is to be cool!
+        |""".stripMargin)
+    case class Settings(
+      @help("Minimum size") minSize: Int,
+      maxSize: Int,
+      defaultSize: Int = -1
+    )
 
-    println(Config.of[Settings].parse("min-size: 2", "max-size: 4"))
+    println(Config.of[Settings].parse(List("--default-size=3"), "min-size: 2", "max-size: 4"))
+
+    println(Config.of[Settings].parse(List.empty, "min-size: 2", "max-size: 4"))
 
 
   }

@@ -10,6 +10,10 @@ package object config {
 
   case object UnableToParseConfigError extends Error
 
+  case object UnableToCreateOpsError extends Error
+
+  case object UnableToParseArgumentsError extends Error
+
   type Result[+T] = Either[Error, T]
 
   object Result {
