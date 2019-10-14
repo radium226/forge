@@ -290,7 +290,7 @@ object OneLastTry extends App {
 
   object Config {
 
-    def of[A](implicit config: Config[A]): Config[A] = config
+    def apply[A](implicit config: Config[A]): Config[A] = config
 
   }
 
@@ -352,11 +352,11 @@ object OneLastTry extends App {
   val user =
     """
       |{
-      | ba2m: 'Kiki'
+      | bam: 'Kiki'
       |}
       |""".stripMargin
 
-  val config = Config.of[Example]
+  val config = Config[Example]
 
   //println(config.load(system, user))
 
@@ -365,7 +365,7 @@ object OneLastTry extends App {
     c <- config.complete(p)
   } yield (p, c))
 
-  println(config.load(system, user))
+  println(Config[Example].load(system, user))
 
   /*println(partialConfig.empty)
 

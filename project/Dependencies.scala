@@ -19,6 +19,10 @@ object Dependencies {
     "org.typelevel" %% "kittens" % "2.0.0"
   )
 
+  lazy val mouse = Seq(
+    "org.typelevel" %% "mouse" % "0.23"
+  )
+
   lazy val dbus = Seq(
     "com.github.hypfvieh" % "dbus-java" % "3.0.0"
   )
@@ -38,7 +42,8 @@ object Dependencies {
 
   lazy val config = Seq(
     "com.typesafe" % "config" % "1.3.4",
-    "com.iheart" %% "ficus" % "1.4.3"
+    "com.iheart" %% "ficus" % "1.4.3",
+    "com.github.pureconfig" % "pureconfig_2.12" % "0.12.1"
   )
 
   lazy val scopt = Seq(
