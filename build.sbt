@@ -12,7 +12,8 @@ ThisBuild / scalacOptions ++= Seq(
   "-unchecked",
   "-language:postfixOps",
   "-language:higherKinds",
-  "-Ypartial-unification")
+  "-Ypartial-unification",
+  "-Xlog-implicits")
 
 lazy val root = (project in file("modules/forge"))
   .settings(

@@ -10,5 +10,5 @@ trait AllInstances extends ToPartialInstances
                       with MonoidInstances
                       with ConfigInstances
                       with ConfigReaderInstances
-                      with MakeOptionInstances
                       with MakeSubcommandInstances
+                      with MakeOptionInstances

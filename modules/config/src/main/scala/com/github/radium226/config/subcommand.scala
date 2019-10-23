@@ -1,11 +1,12 @@
 package com.github.radium226.config
 
 import com.google.common.base.CaseFormat
-import com.monovore.decline.{Command, Opts}
+import com.monovore.decline._
 import shapeless._
 import shapeless.labelled._
 
 import scala.reflect.ClassTag
+
 
 trait MakeSubcommand[Value] {
 
@@ -17,7 +18,7 @@ object MakeSubcommand {
 
   type Aux[Value] = MakeSubcommand[Value]
 
-  def instance[Value](f: => Result[Opts[Value]]): MakeSubcommand[Value] = new MakeSubcommand[Value] {
+  def instance[Value](f: => Result[Opts[Value]]): MakeSubcommand.Aux[Value] = new MakeSubcommand[Value] {
 
     override def apply: Result[Opts[Value]] = f
 
@@ -33,9 +34,35 @@ trait MakeSubcommandSyntax {
 
 trait MakeSubcommandLowPriorityInstances {
 
+  implicit def makeSubcommandForCNil: MakeSubcommand.Aux[CNil] = MakeSubcommand.instance(Result.success(Opts.never))
+
+  implicit def makeSubcommandForCCons[H, T <: Coproduct](implicit
+    makeSubcommandForH: MakeSubcommand.Aux[H],
+    makeSubcommandForT: MakeSubcommand.Aux[T]
+  ): MakeSubcommand.Aux[H :+: T] = MakeSubcommand.instance({
+    println("We are in makeSubcommandForCCons")
+    for {
+      subcommandForH <- makeSubcommandForH.apply
+      subcommandForT <- makeSubcommandForT.apply
+    } yield subcommandForH.orElse(subcommandForT).map(_.asInstanceOf[H :+: T])
+  })
+
+  implicit def makeSubcommandForCoproductButNotOption[T, ReprT <: Coproduct](implicit
+    generic: Generic.Aux[T, ReprT],
+    makeSubcommandForReprT: MakeSubcommand.Aux[ReprT],
+    classTagForT: ClassTag[T]
+  ): MakeSubcommand.Aux[T] = MakeSubcommand.instance({
+    println(s"We are in makeSubcommandForCoproductButNotOption for ${classTagForT.runtimeClass.getSimpleName}")
+    makeSubcommandForReprT.apply.map(_.map(generic.from(_)))
+  })
+
+}
+
+trait MakeSubcommandInstances extends MakeSubcommandLowPriorityInstances {
+
   implicit def makeSubcommandForAny[T, HelpsForT <: HList](implicit
-    makeOptionForT: Lazy[MakeOption[T, HelpsForT]],
     helpsForT: Annotations.Aux[help, T, HelpsForT],
+    makeOptionForT: MakeOption.Aux[T, HelpsForT],
     classTagForT: ClassTag[T],
     nameForT: AnnotationOption[name, T],
     helpForT: AnnotationOption[help, T]
@@ -46,42 +73,10 @@ trait MakeSubcommandLowPriorityInstances {
     val defaultHelp = s"No help for ${name}! "
     val help = helpForT().map(_.value).getOrElse(defaultHelp)
 
-    makeOptionForT
-      .value(helpsForT())
-      .map({ opts =>
-        Opts.subcommand[T](name = name, help = help)(opts)
-      })
-  })
-
-  implicit def makeSubcommandForFieldType[K <: Symbol, T](implicit
-    witnessForK: Witness.Aux[K],
-    makeSubcommandForT: MakeSubcommand[T]
-  ): MakeSubcommand[FieldType[K, T]] = MakeSubcommand.instance({
-    makeSubcommandForT.apply.map(_.map(field[K](_)))
-  })
-
-}
-
-trait MakeSubcommandInstances extends MakeSubcommandLowPriorityInstances {
-
-  implicit def makeSubcommandForCNil: MakeSubcommand.Aux[CNil] = MakeSubcommand.instance(Result.success(Opts.never))
-
-  implicit def makeSubcommandForCCons[H, T <: Coproduct](implicit
-    makeSubcommandForH: MakeSubcommand.Aux[H],
-    makeSubcommandForT: MakeSubcommand.Aux[T]
-  ): MakeSubcommand.Aux[H :+: T] = MakeSubcommand.instance({
-    for {
-      subcommandForH <- makeSubcommandForH.apply
-      subcommandForT <- makeSubcommandForT.apply
-    } yield subcommandForH.orElse(subcommandForT).map(_.asInstanceOf[H :+: T])
-  })
-
-  implicit def makeSubcommandForGeneric[T, ReprT](implicit
-    generic: Generic.Aux[T, ReprT],
-    actionForT: Annotation[action, T],
-    makeSubcommandForReprT: MakeSubcommand.Aux[ReprT]
-  ): MakeSubcommand.Aux[T] = MakeSubcommand.instance({
-    makeSubcommandForReprT.apply.map(_.map(generic.from(_)))
+    makeOptionForT(helpsForT())
+        .map({ opts =>
+          Opts.subcommand[T](name = name, help = help)(opts)
+        })
   })
 
 }

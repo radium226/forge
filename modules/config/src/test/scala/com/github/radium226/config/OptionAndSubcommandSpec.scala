@@ -9,7 +9,6 @@ import shapeless.syntax.singleton._
 
 class OptionAndSubcommandSpec extends AbstractConfigSpec {
 
-  @action()
   sealed trait Action
 
   @help("Yay, delete! ")
@@ -44,20 +43,24 @@ class OptionAndSubcommandSpec extends AbstractConfigSpec {
     val result = makeSubcommand[Action]
     println(s"result=${result}")
 
-    printHelp(result)
+    //printHelp(result)
   }
 
-  case class Settings(action: Action)
+  case class Settings(id: String, action: Action)
 
-  //it should "be able to produce option with nested Action" in {
-  //  println(makeOption[Settings])
+  //it should "not work with option" in {
+    //println(makeSubcommand[Option[String]])
   //}
+
+  it should "be able to produce option with nested Action" in {
+    printHelp(makeOption[Settings])
+  }
 
   case class Fucker(name: Option[String])
 
   it should "not be fucked by Option[String]" in {
-    println(makeOption[Fucker])
-    printHelp(makeSubcommand[Fucker])
+    //println(makeOption[Fucker])
+    //printHelp(makeSubcommand[Fucker])
   }
 
   it should "do... Well IDK, with Option" in {

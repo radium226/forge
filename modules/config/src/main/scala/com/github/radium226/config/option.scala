@@ -25,11 +25,6 @@ object MakeOption {
 
 }
 
-trait MakeOptionHListInstances {
-
-
-}
-
 trait MakeOptionPartiallyApplied[T] {
 
   def apply: Result[Opts[T]]
@@ -57,15 +52,30 @@ trait MakeOptionSyntax {
 
 trait MakeOptionLowPriorityInstances {
 
-  implicit def makeOptionForSubcommand[K <: Symbol, T, HelpForT <: Option[help]](implicit
-    makeSubcommandForT: MakeSubcommand.Aux[T]
-  ): MakeOption.Aux[FieldType[K, T], HelpForT] = MakeOption.instance({ helpForT =>
-    makeSubcommandForT.apply.map(_.map(field[K](_))) //FIXME: Something is awkward here
+  /*implicit def makeOptionForSubcommand[K <: Symbol, A, HelpForA <: Option[help]](implicit
+    witnessForK: Witness.Aux[K],
+    makeSubcommandForA: Lazy[MakeSubcommand.Aux[A]]
+  ): MakeOption.Aux[FieldType[K, A], HelpForA] = MakeOption.instance({ _ =>
+    makeSubcommandForA.value.apply.map(_.map(field[K](_)))
+  })*/
+
+  implicit def makeOptionForFieldType[K <: Symbol, A, HelpForA <: Option[help]](implicit
+    //argumentForA: Argument[A],
+    argumentOrMakeSubcommandForA: Argument[A] OrElse MakeSubcommand.Aux[A],
+    witnessForK: Witness.Aux[K]
+  ): MakeOption.Aux[FieldType[K, A], HelpForA] = MakeOption.instance({ help =>
+    val name = CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, witnessForK.value.name)
+    /*Result.success(Opts.option[A](name, help.map(_.value).getOrElse("No help! ")).map(field[K](_)))*/
+
+    argumentOrMakeSubcommandForA.fold(
+      { argumentForA => Result.success(Opts.option[A](name, help.map(_.value).getOrElse("No help! "))(argumentForA)) },
+      { _.apply }
+    ).map(_.map(field[K](_)))
   })
 
 }
 
-trait MakeOptionInstances extends MakeOptionLowPriorityInstances with MakeOptionPartiallyAppliedInstances {
+trait MakeOptionMiddlePriorityInstances extends MakeOptionLowPriorityInstances {
 
   implicit def makeOptionForLabelledGeneric[T, ReprT <: HList, HelpsForT <: HList](implicit
     labelledGeneric: LabelledGeneric.Aux[T, ReprT],
@@ -80,7 +90,7 @@ trait MakeOptionInstances extends MakeOptionLowPriorityInstances with MakeOption
   })
 
   implicit def makeOptionForHCons[K <: Symbol, H, T <: HList, HelpForH <: Option[help], HelpsForT <: HList](implicit
-    /*makeOptionOrSubcommandForH: Lazy[MakeSubcommand[H] OrElse MakeOption.Aux[FieldType[K, H], HelpForH]],*/
+    //makeOptionOrSubcommandForH: MakeSubcommand.Aux[H] OrElse MakeOption.Aux[FieldType[K, H], HelpForH],
     makeOptionForH: MakeOption.Aux[FieldType[K, H], HelpForH],
     makeOptionForT: MakeOption.Aux[T, HelpsForT],
     witnessForK: Witness.Aux[K]
@@ -92,20 +102,22 @@ trait MakeOptionInstances extends MakeOptionLowPriorityInstances with MakeOption
     } yield (optsForH, optsForT).mapN(_ :: _)
   })
 
-  implicit def makeOptionForFieldType[K <: Symbol, A, HelpForA <: Option[help]](implicit
-    argumentForA: Argument[A],
-    witnessForK: Witness.Aux[K]
-  ): MakeOption.Aux[FieldType[K, A], HelpForA] = MakeOption.instance({ help =>
-    val name = CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, witnessForK.value.name)
-    Result.success(Opts.option[A](name, help.map(_.value).getOrElse("No help! ")).map(field[K](_)))
-  })
+}
 
-  implicit def makeOptionForOption[K <: Symbol, T, HelpForT <: Option[help]](implicit
+trait MakeOptionInstances extends MakeOptionMiddlePriorityInstances with MakeOptionPartiallyAppliedInstances {
+
+  implicit def makeOptionForFieldTypeOfOption[K <: Symbol, T, HelpForT <: Option[help]](implicit
     makeOptionForT: MakeOption.Aux[FieldType[K, T], HelpForT]
   ): MakeOption.Aux[FieldType[K, Option[T]], HelpForT] = MakeOption.instance({ helpForT =>
     makeOptionForT(helpForT).map({ optsForT =>
       optsForT.map(_.asInstanceOf[T]).orNone.map(field[K](_))
     })
+  })
+
+  implicit def makeOptionForOption[T, HelpForT <: Option[help]](implicit
+    makeOptionForT: MakeOption.Aux[T, HelpForT]
+  ): MakeOption.Aux[Option[T], HelpForT] = MakeOption.instance({ helpForT =>
+    makeOptionForT(helpForT).map(_.orNone)
   })
 
 }
