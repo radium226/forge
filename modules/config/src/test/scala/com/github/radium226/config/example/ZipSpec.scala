@@ -1,6 +1,6 @@
 package com.github.radium226.config.example
 
-import com.github.radium226.config.ConfigSpec
+/*import com.github.radium226.config.ConfigSpec
 
 import shapeless._
 import shapeless.ops.hlist.Tupler.Aux
@@ -42,3 +42,4 @@ class ZipSpec extends ConfigSpec {
   }
 
 }
+*/

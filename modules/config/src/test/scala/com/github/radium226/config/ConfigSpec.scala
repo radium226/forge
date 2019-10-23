@@ -10,7 +10,7 @@ import cats.implicits._
 import com.monovore.decline._
 
 
-class ConfigSpec extends AbstractConfigSpec with AllInstances with AllSyntax {
+class ConfigSpec extends AbstractConfigSpec {
 
   case class Person(name: String, age: Int)
 
@@ -56,7 +56,24 @@ class ConfigSpec extends AbstractConfigSpec with AllInstances with AllSyntax {
     println(Config.of[Settings].parse(List("--default-size=3"), "min-size: 2", "max-size: 4"))
 
     println(Config.of[Settings].parse(List.empty, "min-size: 2", "max-size: 4"))
+  }
 
+  it should "be able to work with actions to" in {
+    /*sealed trait Action
+
+    case class Delete(id: Int) extends Action
+
+    case class Create(name: String) extends Action
+
+    case object Help extends Action
+
+    case class Settings(
+      url: String,
+      action: Action = Help
+    )
+
+    val settings = Config.of[Settings].parse(List("--url=http://example.com", "delete", "--id=2"))
+    println(settings)*/
 
   }
 

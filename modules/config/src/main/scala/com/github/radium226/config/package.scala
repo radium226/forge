@@ -14,6 +14,8 @@ package object config {
 
   case object UnableToParseArgumentsError extends Error
 
+  case object NotImplementedError extends Error
+
   type Result[+T] = Either[Error, T]
 
   object Result {
