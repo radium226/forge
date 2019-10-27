@@ -15,6 +15,8 @@ import com.github.radium226.git._
 
 import scala.concurrent.ExecutionContext
 
+import com.github.radium226.forge.client.Config
+
 object Main extends IOApp with ConfigSupport {
 
   type App = ReaderT[IO, Config[IO], Unit]

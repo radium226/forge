@@ -16,15 +16,15 @@ package object config {
 
   case object NotImplementedError extends Error
 
-  type Result[+T] = Either[Error, T]
+  type Result2[+T] = Either[Error, T]
 
-  object Result {
+  object Result2 {
 
-    def success[T](t: T): Result[T] = {
+    def success[T](t: T): Result2[T] = {
       Right(t)
     }
 
-    def failure(error: Error): Result[Nothing] = {
+    def failure(error: Error): Result2[Nothing] = {
       Left(error)
     }
 

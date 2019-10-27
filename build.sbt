@@ -3,7 +3,7 @@ import sbt.Keys.libraryDependencies
 logLevel := Level.Debug
 
 ThisBuild / organization := "com.github.radium226"
-ThisBuild / scalaVersion := "2.12.7"
+ThisBuild / scalaVersion := "2.13.1"
 ThisBuild / version      := "0.1-SNAPSHOT"
 
 ThisBuild / scalacOptions ++= Seq(
@@ -11,9 +11,8 @@ ThisBuild / scalacOptions ++= Seq(
   "-deprecation",
   "-unchecked",
   "-language:postfixOps",
-  "-language:higherKinds",
-  "-Ypartial-unification",
-  "-Xlog-implicits")
+  "-language:higherKinds")/*,
+  "-Xlog-implicits")*/
 
 lazy val root = (project in file("modules/forge"))
   .settings(
@@ -24,6 +23,7 @@ lazy val root = (project in file("modules/forge"))
     libraryDependencies ++= Dependencies.xtract,
     libraryDependencies ++= Dependencies.libpam4j,
     libraryDependencies ++= Dependencies.guava,
+    libraryDependencies +=  "commons-io" % "commons-io" % "2.6",
     libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3",
     libraryDependencies += "uk.co.caprica" % "juds" % "0.94.1",
     assembly / assemblyJarName := "forge.jar",
@@ -43,14 +43,16 @@ lazy val root = (project in file("modules/forge"))
     publishArtifact in (Compile, packageDoc) := false,
     publishTo := Some("forge" at "http://forge.rouages.xyz:1234/maven2"),
     credentials += Credentials(file(".credentials")),
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8"),
+    addCompilerPlugin("org.typelevel" % "kind-projector_2.13.1" % "0.11.0"),
     updateOptions := updateOptions.value.withGigahorse(false), // https://github.com/sbt/sbt/issues/3570
     logBuffered in Test := false,
     libraryDependencies ++= Dependencies.scalatic,
     libraryDependencies ++= Dependencies.scalaTest map(_ % Test),
     libraryDependencies ++= Dependencies.circe,
     libraryDependencies ++= Dependencies.config,
-    libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13"
+    libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13",
+    libraryDependencies +=  "commons-io" % "commons-io" % "2.6",
+    scalaVersion := "2.13.1"
   )
     .dependsOn(`system`, `http4s-fastcgi`, `config`)
 
@@ -67,7 +69,9 @@ lazy val `config` = (project in file("modules/config"))
     libraryDependencies ++= Dependencies.config,
     libraryDependencies ++= Dependencies.guava,
     libraryDependencies ++= Dependencies.scalaTest.map(_ % Test),
-    libraryDependencies ++= Dependencies.scalatic
+    libraryDependencies ++= Dependencies.scalatic,
+    libraryDependencies +=  "commons-io" % "commons-io" % "2.6",
+    scalaVersion := "2.13.1"
   )
 
 lazy val `system` = RootProject(uri("../system-scala"))

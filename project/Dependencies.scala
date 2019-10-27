@@ -42,12 +42,12 @@ object Dependencies {
 
   lazy val config = Seq(
     "com.typesafe" % "config" % "1.3.4",
-    "com.iheart" %% "ficus" % "1.4.3",
-    "com.github.pureconfig" % "pureconfig_2.12" % "0.12.1"
+    "com.iheart" %% "ficus" % "1.4.7",
+    "com.github.pureconfig" %% "pureconfig" % "0.12.1"
   )
 
   lazy val scopt = Seq(
-    "com.github.scopt" %% "scopt" % "4.0.0-RC2",
+    "com.github.scopt" %% "scopt" % "4.0.0-RC2"
   )
 
   lazy val decline = Seq(
@@ -55,20 +55,20 @@ object Dependencies {
   )
 
   lazy val akkaStream = Seq(
-    "com.typesafe.akka" %% "akka-stream" % "2.5.19",
-    "com.typesafe.akka" %% "akka-stream-contrib" % "0.9",
-    "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.19" % Test
+    "com.typesafe.akka" %% "akka-stream" % "2.5.26",
+    "com.typesafe.akka" %% "akka-stream-contrib" % "0.10",
+    "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.26" % Test
   )
 
   lazy val http4s = Seq(
-    "org.http4s" %% "http4s-core" % "0.20.11",
-    "org.http4s" %% "http4s-dsl" % "0.20.11",
-    "org.http4s" %% "http4s-blaze-server" % "0.20.11",
-    "org.http4s" %% "http4s-blaze-client" % "0.20.11"
+    "org.http4s" %% "http4s-core" % "0.21.0-M5",
+    "org.http4s" %% "http4s-dsl" % "0.21.0-M5",
+    "org.http4s" %% "http4s-blaze-server" % "0.21.0-M5",
+    "org.http4s" %% "http4s-blaze-client" % "0.21.0-M5"
   )
 
   lazy val xtract = Seq(
-    "com.lucidchart" %% "xtract" % "2.0.1"
+    "com.lucidchart" %% "xtract" % "2.2.1"
   )
 
   lazy val libpam4j = Seq(
@@ -88,8 +88,8 @@ object Dependencies {
   )
 
   lazy val circe = Seq(
-    "io.circe" %% "circe-core" % "0.11.1",
-    "io.circe" %% "circe-parser" % "0.11.1"
+    "io.circe" %% "circe-core" % "0.12.3",
+    "io.circe" %% "circe-parser" % "0.12.3"
   )
 
 }

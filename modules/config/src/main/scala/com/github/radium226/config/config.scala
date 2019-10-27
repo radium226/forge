@@ -13,7 +13,7 @@ import pureconfig.generic.auto._
 
 trait Config[T] {
 
-  def parse(arguments: List[String], texts: String*): Result[T]
+  def parse(arguments: List[String], texts: String*): Result2[T]
 
 }
 
@@ -43,19 +43,19 @@ trait ConfigInstances {
     headerForT: AnnotationOption[header, T]
   ): Config[T] = new Config[T] {
 
-    def parseFiles(texts: String*): Result[List[PartialForT]] = {
+    def parseFiles(texts: String*): Result2[List[PartialForT]] = {
       texts
         .toList
         .map(ConfigSource.string(_))
         .traverse({ configSourceObject =>
-          val result = configSourceObject.load[PartialForT]
-          println(result)
-          result
+          val Result2 = configSourceObject.load[PartialForT]
+          println(Result2)
+          Result2
         })
-        .fold({ _ => Result.failure(UnableToParseConfigError)}, Result.success(_))
+        .fold({ _ => Result2.failure(UnableToParseConfigError)}, Result2.success(_))
     }
 
-    def parseArguments(arguments: List[String]): Result[PartialForT] = {
+    def parseArguments(arguments: List[String]): Result2[PartialForT] = {
       println(s"defaultForT=${defaultForT()}")
       makeOptionForPartialForT(helpForT())
         .flatMap({ opts =>
@@ -63,11 +63,11 @@ trait ConfigInstances {
           println(command.showHelp)
           command
             .parse(arguments)
-            .fold[Result[PartialForT]]({ help => println(help) ; Result.failure(UnableToParseArgumentsError) }, { partialForT => Result.success(partialForT) })
+            .fold[Result2[PartialForT]]({ help => println(help) ; Result2.failure(UnableToParseArgumentsError) }, { partialForT => Result2.success(partialForT) })
         })
     }
 
-    def parse(arguments: List[String], texts: String*): Result[T] = {
+    def parse(arguments: List[String], texts: String*): Result2[T] = {
       for {
         partialsForTFromFiles    <- parseFiles(texts: _*)
         partialForTFromArguments <- parseArguments(arguments)

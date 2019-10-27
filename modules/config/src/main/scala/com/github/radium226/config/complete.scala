@@ -7,7 +7,7 @@ trait ToComplete[Input] {
 
   type Output
 
-  def apply(input: Input): Result[Output]
+  def apply(input: Input): Result2[Output]
 
 }
 
@@ -17,13 +17,13 @@ object ToComplete {
 
     type Output = T
 
-    def apply(partialForT: Partial[T]): Result[T] = {
+    def apply(partialForT: Partial[T]): Result2[T] = {
       partialForT match {
         case Some(t) =>
-          Result.success(t)
+          Result2.success(t)
 
         case None =>
-          Result.failure(AbsentValueError)
+          Result2.failure(AbsentValueError)
       }
     }
 
@@ -38,7 +38,7 @@ trait ToCompleteSyntax {
 
   implicit class ToCompleteOps[I](input: I) {
 
-    def complete(implicit toCompleteForI: ToComplete[I]): Result[toCompleteForI.Output] = toCompleteForI(input)
+    def complete(implicit toCompleteForI: ToComplete[I]): Result2[toCompleteForI.Output] = toCompleteForI(input)
 
   }
 
@@ -53,7 +53,7 @@ trait ToCompleteInstances {
 
     type Output = PartialForReprT
 
-    def apply(t: T): Result[Output] = {
+    def apply(t: T): Result2[Output] = {
       toPartialForReptT(labelledGeneric.to(t))
     }
 
@@ -63,8 +63,8 @@ trait ToCompleteInstances {
 
     type Output = HNil
 
-    def apply(hNil: HNil): Result[HNil] = {
-      Result.success(HNil)
+    def apply(hNil: HNil): Result2[HNil] = {
+      Result2.success(HNil)
     }
 
   }
@@ -77,7 +77,7 @@ trait ToCompleteInstances {
 
     type Output = FieldType[K, H] :: T
 
-    def apply(input: FieldType[K, PartialForH] :: PartialForT): Result[Output] = {
+    def apply(input: FieldType[K, PartialForH] :: PartialForT): Result2[Output] = {
       for {
         h <- toCompleteForPartialForH(input.head)
         t <- toCompleteForPartialForT(input.tail)

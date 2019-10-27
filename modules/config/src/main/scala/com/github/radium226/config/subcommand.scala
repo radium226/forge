@@ -10,7 +10,7 @@ import scala.reflect.ClassTag
 
 trait MakeSubcommand[Value] {
 
-  def apply: Result[Opts[Value]]
+  def apply: Result2[Opts[Value]]
 
 }
 
@@ -18,9 +18,9 @@ object MakeSubcommand {
 
   type Aux[Value] = MakeSubcommand[Value]
 
-  def instance[Value](f: => Result[Opts[Value]]): MakeSubcommand.Aux[Value] = new MakeSubcommand[Value] {
+  def instance[Value](f: => Result2[Opts[Value]]): MakeSubcommand.Aux[Value] = new MakeSubcommand[Value] {
 
-    override def apply: Result[Opts[Value]] = f
+    override def apply: Result2[Opts[Value]] = f
 
   }
 
@@ -28,13 +28,13 @@ object MakeSubcommand {
 
 trait MakeSubcommandSyntax {
 
-  def makeSubcommand[T](implicit makeSubcommandForT: MakeSubcommand[T]): Result[Opts[T]] = makeSubcommandForT.apply
+  def makeSubcommand[T](implicit makeSubcommandForT: MakeSubcommand[T]): Result2[Opts[T]] = makeSubcommandForT.apply
 
 }
 
 trait MakeSubcommandLowPriorityInstances {
 
-  implicit def makeSubcommandForCNil: MakeSubcommand.Aux[CNil] = MakeSubcommand.instance(Result.success(Opts.never))
+  implicit def makeSubcommandForCNil: MakeSubcommand.Aux[CNil] = MakeSubcommand.instance(Result2.success(Opts.never))
 
   implicit def makeSubcommandForCCons[H, T <: Coproduct](implicit
     makeSubcommandForH: MakeSubcommand.Aux[H],

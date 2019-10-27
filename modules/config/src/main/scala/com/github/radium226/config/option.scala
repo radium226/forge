@@ -9,7 +9,7 @@ import pureconfig._
 
 trait MakeOption[Value, Help] {
 
-  def apply(help: Help): Result[Opts[Value]]
+  def apply(help: Help): Result2[Opts[Value]]
 
 }
 
@@ -17,9 +17,9 @@ object MakeOption {
 
   type Aux[Value, Help] = MakeOption[Value, Help]
 
-  def instance[Value, Help](f: Help => Result[Opts[Value]]): MakeOption[Value, Help] = new MakeOption[Value, Help] {
+  def instance[Value, Help](f: Help => Result2[Opts[Value]]): MakeOption[Value, Help] = new MakeOption[Value, Help] {
 
-    override def apply(help:  Help): Result[Opts[Value]] = f(help)
+    override def apply(help:  Help): Result2[Opts[Value]] = f(help)
 
   }
 
@@ -27,7 +27,7 @@ object MakeOption {
 
 trait MakeOptionPartiallyApplied[T] {
 
-  def apply: Result[Opts[T]]
+  def apply: Result2[Opts[T]]
 
 }
 
@@ -38,7 +38,7 @@ trait MakeOptionPartiallyAppliedInstances {
     makeOptionForT: MakeOption[T, HelpsForT]
   ): MakeOptionPartiallyApplied[T]  = new MakeOptionPartiallyApplied[T] {
 
-    override def apply: Result[Opts[T]] = makeOptionForT(helpsForT())
+    override def apply: Result2[Opts[T]] = makeOptionForT(helpsForT())
 
   }
 
@@ -46,7 +46,7 @@ trait MakeOptionPartiallyAppliedInstances {
 
 trait MakeOptionSyntax {
 
-  def makeOption[T](implicit makeOptionPartiallyAppliedForT: MakeOptionPartiallyApplied[T]): Result[Opts[T]] = makeOptionPartiallyAppliedForT.apply
+  def makeOption[T](implicit makeOptionPartiallyAppliedForT: MakeOptionPartiallyApplied[T]): Result2[Opts[T]] = makeOptionPartiallyAppliedForT.apply
 
 }
 
@@ -61,15 +61,15 @@ trait MakeOptionLowPriorityInstances {
 
   implicit def makeOptionForFieldType[K <: Symbol, A, HelpForA <: Option[help]](implicit
     //argumentForA: Argument[A],
-    argumentOrMakeSubcommandForA: Argument[A] OrElse MakeSubcommand.Aux[A],
+    argumentOrMakeSubcommandForA: Argument[A] OrElse Lazy[MakeSubcommand.Aux[A]],
     witnessForK: Witness.Aux[K]
   ): MakeOption.Aux[FieldType[K, A], HelpForA] = MakeOption.instance({ help =>
     val name = CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, witnessForK.value.name)
-    /*Result.success(Opts.option[A](name, help.map(_.value).getOrElse("No help! ")).map(field[K](_)))*/
+    /*Result2.success(Opts.option[A](name, help.map(_.value).getOrElse("No help! ")).map(field[K](_)))*/
 
     argumentOrMakeSubcommandForA.fold(
-      { argumentForA => Result.success(Opts.option[A](name, help.map(_.value).getOrElse("No help! "))(argumentForA)) },
-      { _.apply }
+      { argumentForA => Result2.success(Opts.option[A](name, help.map(_.value).getOrElse("No help! "))(argumentForA)) },
+      { _.value.apply }
     ).map(_.map(field[K](_)))
   })
 
@@ -86,7 +86,7 @@ trait MakeOptionMiddlePriorityInstances extends MakeOptionLowPriorityInstances {
 
 
   implicit def makeOptionForHNil: MakeOption.Aux[HNil, HNil] = MakeOption.instance({ _ =>
-    Result.success(Opts.unit.map({ _ => HNil}))
+    Result2.success(Opts.unit.map({ _ => HNil}))
   })
 
   implicit def makeOptionForHCons[K <: Symbol, H, T <: HList, HelpForH <: Option[help], HelpsForT <: HList](implicit
@@ -106,18 +106,18 @@ trait MakeOptionMiddlePriorityInstances extends MakeOptionLowPriorityInstances {
 
 trait MakeOptionInstances extends MakeOptionMiddlePriorityInstances with MakeOptionPartiallyAppliedInstances {
 
-  implicit def makeOptionForFieldTypeOfOption[K <: Symbol, T, HelpForT <: Option[help]](implicit
+  /*implicit def makeOptionForFieldTypeOfOption[K <: Symbol, T, HelpForT <: Option[help]](implicit
     makeOptionForT: MakeOption.Aux[FieldType[K, T], HelpForT]
   ): MakeOption.Aux[FieldType[K, Option[T]], HelpForT] = MakeOption.instance({ helpForT =>
     makeOptionForT(helpForT).map({ optsForT =>
       optsForT.map(_.asInstanceOf[T]).orNone.map(field[K](_))
     })
-  })
+  })*/
 
-  implicit def makeOptionForOption[T, HelpForT <: Option[help]](implicit
+  /*implicit def makeOptionForOption[T, HelpForT <: Option[help]](implicit
     makeOptionForT: MakeOption.Aux[T, HelpForT]
   ): MakeOption.Aux[Option[T], HelpForT] = MakeOption.instance({ helpForT =>
     makeOptionForT(helpForT).map(_.orNone)
-  })
+  })*/
 
 }

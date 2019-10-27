@@ -40,8 +40,8 @@ class OptionAndSubcommandSpec extends AbstractConfigSpec {
   }
 
   it should "be able to produce subcommand from Action" in {
-    val result = makeSubcommand[Action]
-    println(s"result=${result}")
+    //val result = makeSubcommand[Action]
+    //println(s"result=${result}")
 
     //printHelp(result)
   }
@@ -53,7 +53,7 @@ class OptionAndSubcommandSpec extends AbstractConfigSpec {
   //}
 
   it should "be able to produce option with nested Action" in {
-    printHelp(makeOption[Settings])
+    //printHelp(makeOption[Settings])
   }
 
   case class Fucker(name: Option[String])

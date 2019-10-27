@@ -12,7 +12,7 @@ trait ToPartial[Input] {
 
   type Output
 
-  def apply(input: Input): Result[Output]
+  def apply(input: Input): Result2[Output]
 
 }
 
@@ -23,8 +23,8 @@ object ToPartial {
 
     type Output = Partial[T]
 
-    def apply(t: T): Result[Output] = {
-      Result.success(Partial.present(t))
+    def apply(t: T): Result2[Output] = {
+      Result2.success(Partial.present(t))
     }
 
 
@@ -40,7 +40,7 @@ trait ToPartialSyntax {
 
   implicit class ToPartialOps[I](input: I) {
 
-    def partial(implicit instance: ToPartial[I]): Result[instance.Output] = instance.apply(input)
+    def partial(implicit instance: ToPartial[I]): Result2[instance.Output] = instance.apply(input)
 
   }
 
@@ -55,7 +55,7 @@ trait ToPartialInstances {
 
     override type Output = PartialForReprA
 
-    override def apply(input: A): Result[Output] = {
+    override def apply(input: A): Result2[Output] = {
       toPartialForReprA.value.apply(labelledGeneric.to(input))
     }
 
@@ -69,7 +69,7 @@ trait ToPartialInstances {
 
     type Output = FieldType[K, PartialForH] :: PartialForT
 
-    def apply(input: FieldType[K, H] :: T): Result[Output] = {
+    def apply(input: FieldType[K, H] :: T): Result2[Output] = {
       for {
         partialForH <- toPartialForH(input.head.asInstanceOf[H])
         partialForT <- toPartialForT(input.tail)
@@ -82,7 +82,7 @@ trait ToPartialInstances {
 
     type Output = HNil
 
-    def apply(hNil: HNil): Result[Output] = Result.success(HNil)
+    def apply(hNil: HNil): Result2[Output] = Result2.success(HNil)
 
   }
 
