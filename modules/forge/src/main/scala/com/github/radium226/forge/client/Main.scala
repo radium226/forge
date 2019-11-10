@@ -15,15 +15,17 @@ import com.github.radium226.git._
 
 import scala.concurrent.ExecutionContext
 
-import com.github.radium226.forge.client.Config
+import com.github.radium226.forge.client.Settings
 
-object Main extends IOApp with ConfigSupport {
+import com.github.radium226.config._
 
-  type App = ReaderT[IO, Config[IO], Unit]
+object Main extends IOApp {
+
+  type App = ReaderT[IO, Settings, Unit]
   
   object App {
 
-    def apply(f: Config[IO] => IO[Unit]): App = {
+    def apply(f: Settings => IO[Unit]): App = {
       ReaderT(f)
     }
     
@@ -31,8 +33,8 @@ object Main extends IOApp with ConfigSupport {
 
   override def run(arguments: List[String]): IO[ExitCode] = {
     (for {
-      config <- ConfigBuilder.build[IO, Config[IO]](arguments)
-      _      <- app.run(config)
+      settings <- Config[IO, Settings].parse(arguments: _*)
+      _      <- app.run(settings)
     } yield ExitCode.Success).recoverWith({
       case throwable: Throwable =>
         IO(println("Something happened :(")) *> IO(throwable.printStackTrace(System.err)).as(ExitCode.Error)
@@ -40,8 +42,8 @@ object Main extends IOApp with ConfigSupport {
   }
 
   import Action._
-  def app: App = App { config: Config[IO] =>
-    config.action match {
+  def app: App = App { settings: Settings =>
+    settings.action match {
       case Help =>
         IO(println("THIS IS THE HELP! "))
 
@@ -49,8 +51,8 @@ object Main extends IOApp with ConfigSupport {
         BlazeClientBuilder[IO](ExecutionContext.global).resource.use({ client =>
           for {
             // We create the project
-            port      <- config.port.liftTo[IO](new Exception("Unable to retrieve port"))
-            host      <- config.host.liftTo[IO](new Exception("Unable to retrieve host"))
+            port      <- settings.port.liftTo[IO](new Exception("Unable to retrieve port"))
+            host      <- settings.host.liftTo[IO](new Exception("Unable to retrieve host"))
             baseUri   <- Uri.fromString(s"http://${host}:${port}").liftTo[IO]
             uri        = baseUri.withPath("/projects").withQueryParam("projectName", projectName)
             _         <- client.expect[Unit](Request[IO](uri = uri, method = Method.POST))
@@ -74,8 +76,8 @@ object Main extends IOApp with ConfigSupport {
       case EmitHook(Some(hookName), projectName) =>
         BlazeClientBuilder[IO](ExecutionContext.global).resource.use({ client =>
           for {
-            port    <- config.port.liftTo[IO](new Exception("Unable to retrieve port"))
-            host    <- config.host.liftTo[IO](new Exception("Unable to retrieve host"))
+            port    <- settings.port.liftTo[IO](new Exception("Unable to retrieve port"))
+            host    <- settings.host.liftTo[IO](new Exception("Unable to retrieve host"))
             baseUri <- Uri.fromString(s"http://${host}:${port}").liftTo[IO]
             uri      = baseUri.withPath(s"/projects/${projectName}/hooks/${hookName}")
             _       <- client.expect[Unit](Request[IO](uri = uri, method = Method.PUT))

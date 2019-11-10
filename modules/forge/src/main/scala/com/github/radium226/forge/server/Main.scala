@@ -23,11 +23,13 @@ import com.github.radium226.forge.model.Hook
 import com.github.radium226.forge.run.{Phase, Runner}
 import fs2.concurrent.Queue
 
-object Main extends IOApp with ConfigSupport {
+import com.github.radium226.config._
 
-  def serve(config: Config[IO], httpApp: HttpApp[IO]): Resource[IO, Server[IO]] = {
+object Main extends IOApp {
+
+  def serve(settings: Settings, httpApp: HttpApp[IO]): Resource[IO, Server[IO]] = {
     for {
-      port   <- Resource.liftF[IO, Int](config.port.liftTo[IO](new Exception("Unable to retreive port")))
+      port   <- Resource.liftF[IO, Int](settings.port.liftTo[IO](new Exception("Unable to retreive port")))
       server <- BlazeServerBuilder[IO]
         .withHttpApp(httpApp)
         .bindHttp(port, "0.0.0.0")
@@ -36,11 +38,11 @@ object Main extends IOApp with ConfigSupport {
 
   }
 
-  def makeRoutes(config: Config[IO], hookQueue: Queue[IO, Hook[IO]]): Resource[IO, HttpRoutes[IO]] = {
+  def makeRoutes(settings: Settings, hookQueue: Queue[IO, Hook[IO]]): Resource[IO, HttpRoutes[IO]] = {
     NonEmptyList.of(
-      GitRoutes[IO](config),
-      ProjectRoutes[IO](config),
-      HookRoutes[IO](config, hookQueue)
+      GitRoutes[IO](settings),
+      ProjectRoutes[IO](settings),
+      HookRoutes[IO](settings, hookQueue)
     ).sequence.map(_.reduceK)
   }
 
@@ -54,7 +56,7 @@ object Main extends IOApp with ConfigSupport {
     } yield ()
   }
 
-  def triggerBuild(config: Config[IO], hookQueue: Queue[IO, Hook[IO]]): Resource[IO, Unit] = {
+  def triggerBuild(config: Settings, hookQueue: Queue[IO, Hook[IO]]): Resource[IO, Unit] = {
     Resource.liftF(hookQueue.dequeue
       .evalMap({ hook =>
         build(hook.project)
@@ -68,11 +70,11 @@ object Main extends IOApp with ConfigSupport {
   override def run(arguments: List[String]): IO[ExitCode] = {
    (for {
       hookQueue      <- Resource.liftF(Queue.unbounded[IO, Hook[IO]])
-      config         <- ConfigBuilder.resource[IO, Config[IO]](arguments)
-      httpRoutes     <- makeRoutes(config, hookQueue)
+      settings       <- Resource.liftF(Config[IO, Settings].parse(arguments: _*))
+      httpRoutes     <- makeRoutes(settings, hookQueue)
       httpApp         = httpRoutes.orNotFound
-      _              <- serve(config, httpApp)
-      _              <- triggerBuild(config, hookQueue)
+      _              <- serve(settings, httpApp)
+      _              <- triggerBuild(settings, hookQueue)
     } yield ()).use({ _ => IO.never })
   }
 

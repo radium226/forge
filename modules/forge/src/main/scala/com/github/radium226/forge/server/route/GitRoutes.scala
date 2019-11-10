@@ -22,9 +22,9 @@ object GitRoutes {
 
   }
 
-  def apply[F[_]](config: Config[F])(implicit F: Concurrent[F], contextShift: ContextShift[F]): Resource[F, HttpRoutes[F]] = {
+  def apply[F[_]](settings: Settings)(implicit F: Concurrent[F], contextShift: ContextShift[F]): Resource[F, HttpRoutes[F]] = {
     for {
-      baseFolderPath    <- Resource.liftF[F, JavaPath](config.baseFolderPath.liftTo[F](new Exception("Unable to retreive baseFolderPath")))
+      baseFolderPath    <- Resource.liftF[F, JavaPath](settings.baseFolderPath.liftTo[F](new Exception("Unable to retreive baseFolderPath")))
       gitProjectRootKey <- Resource.liftF[F, Key[JavaPath]](Key.newKey[F, JavaPath])
       gitApp            <- FastCGIAppBuilder[F]
           .withParam("SCRIPT_FILENAME" -> "/usr/lib/git-core/git-http-backend")

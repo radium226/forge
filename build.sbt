@@ -19,7 +19,6 @@ lazy val root = (project in file("modules/forge"))
     name := "forge",
     libraryDependencies ++= Dependencies.cats,
     libraryDependencies ++= Dependencies.http4s,
-    libraryDependencies ++= Dependencies.scopt,
     libraryDependencies ++= Dependencies.xtract,
     libraryDependencies ++= Dependencies.libpam4j,
     libraryDependencies ++= Dependencies.guava,
@@ -49,34 +48,17 @@ lazy val root = (project in file("modules/forge"))
     libraryDependencies ++= Dependencies.scalatic,
     libraryDependencies ++= Dependencies.scalaTest map(_ % Test),
     libraryDependencies ++= Dependencies.circe,
-    libraryDependencies ++= Dependencies.config,
     libraryDependencies += "com.beachape" %% "enumeratum" % "1.5.13",
     libraryDependencies +=  "commons-io" % "commons-io" % "2.6",
     scalaVersion := "2.13.1"
   )
     .dependsOn(`system`, `http4s-fastcgi`, `config`)
 
-lazy val `config` = (project in file("modules/config"))
-  .settings(
-    name := "config",
-    libraryDependencies ++= Dependencies.cats,
-    libraryDependencies ++= Dependencies.kittens,
-    libraryDependencies ++= Dependencies.mouse,
-    libraryDependencies ++= Dependencies.simulacrum,
-    libraryDependencies ++= Dependencies.shapeless,
-    libraryDependencies ++= Dependencies.scopt,
-    libraryDependencies ++= Dependencies.decline,
-    libraryDependencies ++= Dependencies.config,
-    libraryDependencies ++= Dependencies.guava,
-    libraryDependencies ++= Dependencies.scalaTest.map(_ % Test),
-    libraryDependencies ++= Dependencies.scalatic,
-    libraryDependencies +=  "commons-io" % "commons-io" % "2.6",
-    scalaVersion := "2.13.1"
-  )
-
 lazy val `system` = RootProject(uri("../system-scala"))
 
 lazy val `http4s-fastcgi` = RootProject(uri("../http4s-fastcgi"))
+
+lazy val `config` = RootProject(uri("../config-scala"))
 
 resolvers += Resolver.sonatypeRepo("releases")
 resolvers += Resolver.mavenLocal
