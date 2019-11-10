@@ -42,17 +42,17 @@ object Main extends IOApp {
 
   import Action._
   def app: App = App { settings: Settings =>
+    val folderPath = settings.folderPath.getOrElse(Paths.get(System.getProperty("user.dir")))
     settings.action match {
       case Help =>
         IO(println("THIS IS THE HELP! "))
 
-      case Init(folderPath, projectName, templateProjectName) =>
+      case Init(projectNameOption, templateProjectName) =>
+        val projectName = projectNameOption.getOrElse(folderPath.getFileName.toString)
         BlazeClientBuilder[IO](ExecutionContext.global).resource.use({ client =>
           for {
             // We create the project
-            port      <- settings.port.liftTo[IO](new Exception("Unable to retrieve port"))
-            host      <- settings.host.liftTo[IO](new Exception("Unable to retrieve host"))
-            baseUri   <- Uri.fromString(s"http://${host}:${port}").liftTo[IO]
+            baseUri   <- Uri.fromString(s"http://${settings.host}:${settings.port}").liftTo[IO]
             uri        = baseUri.withPath("/projects").withQueryParam("projectName", projectName)
             _         <- client.expect[Unit](Request[IO](uri = uri, method = Method.POST))
 
@@ -75,9 +75,7 @@ object Main extends IOApp {
       case EmitHook(Some(hookName), projectName) =>
         BlazeClientBuilder[IO](ExecutionContext.global).resource.use({ client =>
           for {
-            port    <- settings.port.liftTo[IO](new Exception("Unable to retrieve port"))
-            host    <- settings.host.liftTo[IO](new Exception("Unable to retrieve host"))
-            baseUri <- Uri.fromString(s"http://${host}:${port}").liftTo[IO]
+            baseUri <- Uri.fromString(s"http://${settings.host}:${settings.port}").liftTo[IO]
             uri      = baseUri.withPath(s"/projects/${projectName}/hooks/${hookName}")
             _       <- client.expect[Unit](Request[IO](uri = uri, method = Method.PUT))
           } yield ()

@@ -6,8 +6,8 @@ import com.github.radium226.config._
 
 @application("forge")
 case class Settings(
-  port: Option[Int] = None,
-  host: Option[String] = None,
-  folderPath: Path = Paths.get(System.getProperty("user.dir")),
-  action: Action = Action.Help
+  port: Int,
+  host: String,
+  folderPath: Option[Path],
+  action: Action
 )

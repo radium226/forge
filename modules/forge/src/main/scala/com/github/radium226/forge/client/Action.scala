@@ -7,22 +7,9 @@ sealed trait Action
 object Action {
 
   case class Init(
-    folderPath: Path,
-    projectName: String,
+    projectName: Option[String],
     templateProjectName: Option[String]
   )  extends Action
-
-  object Init {
-
-    def default: Init = {
-      Init(
-        folderPath = Paths.get(System.getProperty("user.dir")),
-        projectName = Paths.get(System.getProperty("user.dir")).getFileName.toString,
-        templateProjectName = None
-      )
-    }
-
-  }
 
   case object Trash extends Action
 
