@@ -14,7 +14,6 @@ import org.http4s.dsl._
 import org.http4s.dsl.io._
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
-import com.github.radium226.forge.config.ConfigBuilder
 import com.github.radium226.forge.project.Project
 import com.github.radium226.forge.server.route.{GitRoutes, HookRoutes, ProjectRoutes}
 import org.http4s.implicits._

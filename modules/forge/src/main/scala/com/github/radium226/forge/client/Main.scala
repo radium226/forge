@@ -5,7 +5,6 @@ import java.nio.file.Paths
 import cats._
 import cats.data._
 import cats.effect._
-import com.github.radium226.forge.config.ConfigBuilder
 import cats.implicits._
 import com.github.radium226.forge.project.Project
 import org.http4s.{Method, Request, Uri}
