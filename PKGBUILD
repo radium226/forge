@@ -1,4 +1,4 @@
-pkgver=r21.2467a7f
+pkgver=r64.eb40a64
 pkgrel=1
 
 pkgname=("forge-git")
@@ -23,12 +23,13 @@ source=(
     "git+https://github.com/radium226/forge.git"
     "git+https://github.com/radium226/http4s-fastcgi.git"
     "git+https://gitlab.com/self-hosting/system-scala.git"
+    "git+https://github.com/radium226/config-scala.git"
     "forged"
     "forge-WRONG_NAME"
     "systemd.service"
     "sysusers.conf"
     "tmpfiles.conf"
-    "server.conf"
+    "forged.conf"
     "emit-hook"
 )
 
@@ -39,7 +40,7 @@ build() {
 
 package() {
     install -Dm0644 \
-      "${srcdir}/forge/modules/forge/target/scala-2.12/forge.jar" \
+      "${srcdir}/forge/modules/forge/target/scala-2.13/forge.jar" \
       "${pkgdir}/usr/lib/forge/share/forge.jar"
 
     install -Dm0755 \
@@ -67,8 +68,8 @@ package() {
       "${pkgdir}/usr/lib/tmpfiles.d/forge.conf"
 
     install -Dm0644 \
-      "${startdir}/server.conf" \
-      "${pkgdir}/etc/forge/server.conf"
+      "${startdir}/forged.conf" \
+      "${pkgdir}/etc/forged.conf"
 
     install -Dm0644 \
       "${startdir}/pam" \
