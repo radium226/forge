@@ -27,14 +27,10 @@ import com.github.radium226.config._
 object Main extends IOApp {
 
   def serve(settings: Settings, httpApp: HttpApp[IO]): Resource[IO, Server[IO]] = {
-    for {
-      port   <- Resource.liftF[IO, Int](settings.port.liftTo[IO](new Exception("Unable to retreive port")))
-      server <- BlazeServerBuilder[IO]
-        .withHttpApp(httpApp)
-        .bindHttp(port, "0.0.0.0")
-        .resource
-    } yield server
-
+    BlazeServerBuilder[IO]
+      .withHttpApp(httpApp)
+      .bindHttp(settings.port, "0.0.0.0")
+      .resource
   }
 
   def makeRoutes(settings: Settings, hookQueue: Queue[IO, Hook[IO]]): Resource[IO, HttpRoutes[IO]] = {
@@ -70,6 +66,7 @@ object Main extends IOApp {
    (for {
       hookQueue      <- Resource.liftF(Queue.unbounded[IO, Hook[IO]])
       settings       <- Resource.liftF(Config[IO, Settings].parse(arguments: _*))
+      _               = println(settings)
       httpRoutes     <- makeRoutes(settings, hookQueue)
       httpApp         = httpRoutes.orNotFound
       _              <- serve(settings, httpApp)

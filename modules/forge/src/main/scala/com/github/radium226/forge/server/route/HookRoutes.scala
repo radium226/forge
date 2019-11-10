@@ -20,8 +20,7 @@ object HookRoutes {
     Resource.pure[F, HttpRoutes[F]](HttpRoutes.of[F]({
       case request @ PUT -> Root / "projects" / projectName / "hooks" / hookName =>
         for {
-          baseFolderPath <- settings.baseFolderPath.liftTo[F](new Exception("Unable to retreive baseFolderPath"))
-          project <- Project.lookUp(baseFolderPath, projectName)
+          project <- Project.lookUp(settings.baseFolderPath, projectName)
           hook     = Hook[F](project, "kikoo")
           _        = println(s" ====> hook=${hook} <======")
           _       <- hookQueue.enqueue1(hook)

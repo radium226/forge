@@ -12,24 +12,20 @@ object ProjectRoutes {
   object ProjectNameQueryParamMatcher extends QueryParamDecoderMatcher[String]("projectName")
 
   def apply[F[_]](settings: Settings)(implicit F: Sync[F]): Resource[F, HttpRoutes[F]] = {
-    Resource.liftF(for {
-      baseFolderPath    <- settings.baseFolderPath.liftTo[F](new Exception("Unable to retreive baseFolderPath"))
-      scriptFolderPath  <- settings.scriptFolderPath.liftTo[F](new Exception("Unable to retreive scriptFolderPath"))
-      routes          = HttpRoutes.of[F]({
-        case POST -> Root / "projects" :? ProjectNameQueryParamMatcher(projectName) =>
-          for {
-            project  <- Project.init[F](baseFolderPath, scriptFolderPath, projectName)
-            response  = Response[F](status = Status.Ok)
-          } yield response
+    Resource.pure(HttpRoutes.of[F]({
+      case POST -> Root / "projects" :? ProjectNameQueryParamMatcher(projectName) =>
+        for {
+          project  <- Project.init[F](settings.baseFolderPath, settings.scriptFolderPath, projectName)
+          response  = Response[F](status = Status.Ok)
+        } yield response
 
-        case DELETE -> Root / "projects" / projectName =>
-          for {
-            project  <- Project.lookUp[F](baseFolderPath, projectName)
-            _        <- project.trash
-            response  = Response[F](status = Status.Ok)
-          } yield response
-      })
-    } yield routes)
+      case DELETE -> Root / "projects" / projectName =>
+        for {
+          project  <- Project.lookUp[F](settings.baseFolderPath, projectName)
+          _        <- project.trash
+          response  = Response[F](status = Status.Ok)
+        } yield response
+    }))
   }
 
 }
