@@ -15,7 +15,7 @@ object Action {
 
   case class EmitHook(
     hookName: Option[String],
-    projectName: String
+    projectName: Option[String]
   ) extends Action
 
   case object UpdateTemplate extends Action

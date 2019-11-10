@@ -13,14 +13,14 @@ FOLDER_PATH := /tmp/archlinux
 clean:
 	sbt clean
 
-target/scala-2.12/forge.jar:
+target/scala-2.13/forge.jar:
 	sbt "assembly"
 
 .PHONY: maven-e2e-test
 maven-e2e-test:
 	set -m
 	sbt "clean" "assembly"
-	java -jar "./target/scala-2.12/forge.jar" --folder="$(FOLDER_PATH)" --port="1234" 2>&1 &
+	java -jar "./target/scala-2.13/forge.jar" --folder="$(FOLDER_PATH)" --port="1234" 2>&1 &
 	trap "kill %1" 0
 	cd "e2e-test/maven"
 	mvn --settings "./settings.xml" \
@@ -35,7 +35,7 @@ maven-e2e-test:
 pacman-e2e-test:
 	set -m
 	sbt "clean" "maven/assembly"
-	java -jar "./target/scala-2.12/forge.jar" --folder="$(FOLDER_PATH)" --port="1234" 2>&1 &
+	java -jar "./target/scala-2.13/forge.jar" --folder="$(FOLDER_PATH)" --port="1234" 2>&1 &
 	trap "kill %1" 0
 
 	cd "e2e-test/pacman"
@@ -50,5 +50,5 @@ pacman-e2e-test:
 e2e-test: maven-e2e-test pacman-e2e-test
 
 .PHONY: start
-start: target/scala-2.12/forge.jar
-	java -jar "target/scala-2.12/forge.jar" --folder="$(FOLDER_PATH)" --port=$(PORT)
+start: target/scala-2.13/forge.jar
+	java -jar "target/scala-2.13/forge.jar" --folder="$(FOLDER_PATH)" --port=$(PORT)
