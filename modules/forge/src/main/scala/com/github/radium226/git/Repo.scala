@@ -1,10 +1,12 @@
 package com.github.radium226.git
 
-import java.nio.file.{Files, Path}
+import java.nio.file.{Files, Path, Paths}
 
 import cats._
 import cats.effect._
 import cats.implicits._
+import com.github.radium226.FileSystem
+import com.github.radium226.fs.LocalFileSystem
 import com.github.radium226.system.execute._
 import org.http4s.Uri
 
@@ -105,6 +107,14 @@ case class Repo[F[_]](folderPath: Path, bare: Boolean) {
 
   def pull(remoteName: RemoteName)(implicit F: Sync[F]): F[Unit] = {
     git("pull", remoteName)
+  }
+
+  def files(implicit F: Sync[F]): F[List[Path]] = {
+    if (bare) {
+      F.raiseError(new Exception("Unable to list files of a bare repo"))
+    } else {
+      LocalFileSystem[F].listFiles(folderPath).map(_.filter(!_.startsWith(Paths.get(".git"))))
+    }
   }
 
 }

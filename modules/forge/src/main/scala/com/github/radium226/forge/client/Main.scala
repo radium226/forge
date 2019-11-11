@@ -13,10 +13,9 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import com.github.radium226.git._
 
 import scala.concurrent.ExecutionContext
-
 import com.github.radium226.forge.client.Settings
-
 import com.github.radium226.config._
+import com.github.radium226.fs.LocalFileSystem
 
 object Main extends IOApp {
 
@@ -33,7 +32,7 @@ object Main extends IOApp {
   override def run(arguments: List[String]): IO[ExitCode] = {
     (for {
       settings <- Config[IO, Settings].parse(arguments: _*)
-      _      <- app.run(settings)
+      _        <- app.run(settings)
     } yield ExitCode.Success).recoverWith({
       case throwable: Throwable =>
         IO(println("Something happened :(")) *> IO(throwable.printStackTrace(System.err)).as(ExitCode.Error)
@@ -52,17 +51,19 @@ object Main extends IOApp {
         BlazeClientBuilder[IO](ExecutionContext.global).resource.use({ client =>
           for {
             // We create the project
-            baseUri   <- Uri.fromString(s"http://${settings.host}:${settings.port}").liftTo[IO]
-            uri        = baseUri.withPath("/projects").withQueryParam("projectName", projectName)
-            _         <- client.expect[Unit](Request[IO](uri = uri, method = Method.POST))
+            baseUri    <- Uri.fromString(s"http://${settings.host}:${settings.port}").liftTo[IO]
+            uri         = baseUri.withPath("/projects").withQueryParam("projectName", projectName)
+            _          <- client.expect[Unit](Request[IO](uri = uri, method = Method.POST))
 
             // We add the existing sources
             remoteUri  = baseUri.withPath(s"/git/${projectName}.git")
-            repo      <- Repo.init[IO](folderPath, bare = false, shared = false)
-            _         <- repo.addRemote("origin", remoteUri)
-            _         <- repo.git("add", "--all")
-            _         <- repo.git("commit", "--message", s"Init the ${projectName} project! ")
-            _         <- repo.git("push", "--set-upstream", "origin", "master")
+            repo       <- Repo.init[IO](folderPath, bare = false, shared = false)
+            _          <- repo.addRemote("origin", remoteUri)
+            filesExist <- repo.files.map(_.isEmpty)
+            _          <- if (filesExist) IO.unit else LocalFileSystem[IO].touchFile(repo.folderPath.resolve(".gitignore"))
+            _          <- repo.git("add", "--all")
+            _          <- repo.git("commit", "--message", s"Init the ${projectName} project! ")
+            _          <- repo.git("push", "--set-upstream", "origin", "master")
 
             // We add the template if needed
             /*_         <- templateProjectName.map({ templateProjectName =>
