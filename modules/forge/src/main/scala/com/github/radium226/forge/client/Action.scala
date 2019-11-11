@@ -20,15 +20,6 @@ object Action {
 
   case object UpdateTemplate extends Action
 
-  object EmitHook {
-
-    def default = EmitHook(
-      hookName = None,
-      projectName = Paths.get(System.getProperty("user.dir")).getParent.getFileName.toString
-    )
-
-  }
-
   case object Help  extends Action
 
 }
