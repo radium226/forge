@@ -14,8 +14,8 @@ object Action {
   case object Trash extends Action
 
   case class EmitHook(
-    hookName: Option[String],
-    projectName: Option[String]
+    hookName: String,
+    projectName: String
   ) extends Action
 
   case object UpdateTemplate extends Action

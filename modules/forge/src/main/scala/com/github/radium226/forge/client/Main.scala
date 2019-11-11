@@ -72,8 +72,7 @@ object Main extends IOApp {
           } yield ()
         })
 
-      case EmitHook(Some(hookName), projectNameOption) =>
-        val projectName = projectNameOption.getOrElse(folderPath.getFileName.toString)
+      case EmitHook(hookName, projectName) =>
         BlazeClientBuilder[IO](ExecutionContext.global).resource.use({ client =>
           for {
             baseUri <- Uri.fromString(s"http://${settings.host}:${settings.port}").liftTo[IO]

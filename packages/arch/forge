@@ -1,0 +1,6 @@
+#!/bin/bash
+
+java \
+  -cp "/usr/lib/forge/share/forge.jar" \
+  "com.github.radium226.forge.client.Main" \
+    "${@}"

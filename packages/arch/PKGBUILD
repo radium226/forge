@@ -1,0 +1,78 @@
+pkgver=r68.6f6aaf2
+pkgrel=1
+
+pkgname=("forge-git")
+
+arch=("any")
+
+pkgver() {
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+makedepends=()
+
+depends=(
+    "java-runtime"
+)
+
+source=(
+    "forge.jar"
+    "forged"
+    "forged.conf"
+    "forge"
+    "forge.conf"
+    "systemd.service"
+    "sysusers.conf"
+    "tmpfiles.conf"
+    "forged.conf"
+    "emit-hook"
+    "pam"
+)
+
+noextract=("${source[@]%%::*}")
+
+build() {
+    :
+}
+
+package() {
+    install -Dm0644 \
+      "${srcdir}/forge.jar" \
+      "${pkgdir}/usr/lib/forge/share/forge.jar"
+
+    install -Dm0755 \
+      "${srcdir}/emit-hook" \
+      "${pkgdir}/usr/lib/forge/bin/emit-hook"
+
+    install -Dm0755 \
+      "${srcdir}/forged" \
+      "${pkgdir}/usr/lib/forge/bin/forged"
+
+    install -Dm0755 \
+      "${srcdir}/forge" \
+      "${pkgdir}/usr/bin/forge"
+
+    install -Dm0644 \
+      "${srcdir}/systemd.service" \
+      "${pkgdir}/usr/lib/systemd/system/forge.service"
+
+    install -Dm0644 \
+      "${srcdir}/sysusers.conf" \
+      "${pkgdir}/usr/lib/sysusers.d/forge.conf"
+
+    install -Dm0644 \
+      "${srcdir}/tmpfiles.conf" \
+      "${pkgdir}/usr/lib/tmpfiles.d/forge.conf"
+
+    install -Dm0644 \
+      "${srcdir}/forged.conf" \
+      "${pkgdir}/etc/forged.conf"
+
+    install -Dm0644 \
+      "${srcdir}/forge.conf" \
+      "${pkgdir}/etc/forge.conf"
+
+    install -Dm0644 \
+      "${startdir}/pam" \
+      "${pkgdir}/etc/pam.d/forge"
+}

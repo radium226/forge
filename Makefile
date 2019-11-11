@@ -1,54 +1,35 @@
-include make/arch-package.mk
-include make/server.mk
-
 SHELL=/bin/bash
 .SHELLFLAGS = -e -u -c
 .ONESHELL:
 
-PORT := 1234
-URL := http://localhost:$(PORT)
-FOLDER_PATH := /tmp/archlinux
+SCALA_VERSION = 2.13
 
 .PHONY: clean
 clean:
 	sbt clean
+	rm "packages/arch/emit-hook" || true
+	rm "packages/arch/forge.jar" || true
+	find "package/arch" -name "*.pkg.tar.xz" | xargs -I {} rm "{}"
 
-target/scala-2.13/forge.jar:
-	sbt "assembly"
 
-.PHONY: maven-e2e-test
-maven-e2e-test:
-	set -m
-	sbt "clean" "assembly"
-	java -jar "./target/scala-2.13/forge.jar" --folder="$(FOLDER_PATH)" --port="1234" 2>&1 &
-	trap "kill %1" 0
-	cd "e2e-test/maven"
-	mvn --settings "./settings.xml" \
-	 	clean \
-	 	deploy \
-			-DaltDeploymentRepository="e2e::default::$(URL)/maven2"
-	cd -
+modules/forge/target/scala-$(SCALA_VERSION)/forge.jar:
+	sbt assembly
 
-	find "$(FOLDER_PATH)" -type "f"
+packages/arch/forge.jar: modules/forge/target/scala-$(SCALA_VERSION)/forge.jar
+	cp "modules/forge/target/scala-$(SCALA_VERSION)/forge.jar" "packages/arch/forge.jar"
 
-.PHONY: pacman-e2e-test
-pacman-e2e-test:
-	set -m
-	sbt "clean" "maven/assembly"
-	java -jar "./target/scala-2.13/forge.jar" --folder="$(FOLDER_PATH)" --port="1234" 2>&1 &
-	trap "kill %1" 0
+package/arch/emit-hook:
+	cp "scripts/emit-hook" "packages/arch/emit-hook"
 
-	cd "e2e-test/pacman"
-	makepkg --force
+.PHONY: arch-package
+arch-package: packages/arch/forge.jar package/arch/emit-hook
+	cd "packages/arch" && \
+	makepkg \
+		--cleanbuild \
+		--clean \
+		--skipinteg \
+		--force
 
-	curl -u "root:root" --upload-file "./fake-1-1-any.pkg.tar.xz" "$(URL)/archlinux/radium226"
-	cd -
-
-	find "$(FOLDER_PATH)" -type "f"
-
-.PHONY: e2e-test
-e2e-test: maven-e2e-test pacman-e2e-test
-
-.PHONY: start
-start: target/scala-2.13/forge.jar
-	java -jar "target/scala-2.13/forge.jar" --folder="$(FOLDER_PATH)" --port=$(PORT)
+.PHONY: arch-install
+arch-install: arch-package
+	find "packages/arch" -name "*.pkg.tar.xz" | xargs -I {} sudo pacman -U "{}" --noconfirm
