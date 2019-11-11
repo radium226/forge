@@ -9,7 +9,7 @@ clean:
 	sbt clean
 	rm "packages/arch/emit-hook" || true
 	rm "packages/arch/forge.jar" || true
-	find "package/arch" -name "*.pkg.tar.xz" | xargs -I {} rm "{}"
+	find "packages/arch" -name "*.pkg.tar.xz" | xargs -I {} rm "{}"
 
 
 modules/forge/target/scala-$(SCALA_VERSION)/forge.jar:
