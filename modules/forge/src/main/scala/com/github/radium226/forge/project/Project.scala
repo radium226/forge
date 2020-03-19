@@ -6,16 +6,18 @@ import cats._
 import cats.effect._
 import io.chrisdavenport.vault._
 import cats.implicits._
+import com.github.radium226.fs.LocalFileSystem
 import com.github.radium226.git.Repo
+import com.github.radium226.system.execute.Executor
 import com.google.common.io.MoreFiles
 
-object Project {
+object ProjectManager {
 
-  object Keys {
+  def apply[F[_]](localFileSystem: LocalFileSystem[F], executor: Executor[F])(implicit F: Sync[F]): ProjectManager[F] = new ProjectManager[F](localFileSystem, executor)
 
-    val RootFolderPath = Key.newKey[IO, Path].unsafeRunSync
+}
 
-  }
+class ProjectManager[F[_]](localFileSystem: LocalFileSystem[F], executor: Executor[F]) {
 
   def init[F[_]](baseFolderPath: Path, scriptFolderPath: Path, name: Name)(implicit F: Sync[F]): F[Project[F]] = {
     val folderPath = baseFolderPath.resolve(name)
@@ -31,6 +33,18 @@ object Project {
       })
     } yield new Project[F](folderPath, name, repo)
   }
+
+}
+
+object Project {
+
+  object Keys {
+
+    val RootFolderPath = Key.newKey[IO, Path].unsafeRunSync
+
+  }
+
+
 
   def trash[F[_]](project: Project[F])(implicit F: Sync[F]) = {
     F.delay(MoreFiles.deleteRecursively(project.folderPath))
@@ -48,10 +62,10 @@ object Project {
 
 }
 
-case class Project[F[_]](folderPath: Path, name: Name, repo: Repo[F]) {
+class Project[F[_]](folderPath: Path, name: Name, repo: Repo[F])(implicit F: Sync[F]) {
   self =>
 
-  def trash(implicit F: Sync[F]): F[Unit] = {
+  def trash: F[Unit] = {
     Project.trash(self)
   }
 

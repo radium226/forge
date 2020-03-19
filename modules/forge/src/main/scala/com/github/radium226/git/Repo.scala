@@ -12,108 +12,81 @@ import org.http4s.Uri
 
 object Repo {
 
-  def init[F[_]](folderPath: Path, shared: Boolean = false, bare: Boolean = false, templateFolderPath: Option[Path] = None)(implicit F: Sync[F]): F[Repo[F]] = {
-    val command = List("git", "init") ++
-      (if (shared) List("--shared") else List.empty) ++
-      (if (bare) List("--bare") else List.empty) ++
-      templateFolderPath
-        .map(_.toString)
-        .map(List(_))
-        .getOrElse(List.empty) :+
-      folderPath.toString
-
-    F.delay(Files.createDirectories(folderPath)) *> Executor[F].execute(command: _*).foreground.as(Repo[F](folderPath, bare))
-  }
-
-  def apply[F[_]](folderPath: Path, bare: Boolean): Repo[F] = {
-    new Repo[F](folderPath, bare)
-  }
-
-  def in[F[_]](folderPath: Path)(implicit F: Sync[F]): F[Repo[F]] = {
-    for {
-      stdout <- Executor[F](workingFolderPath = Some(folderPath)).execute("git", "rev-parse", "--is-bare-repository").foreground(Keep.stdout)
-      bare    = stdout.trim == "true"
-    } yield Repo[F](folderPath, bare = bare)
-  }
-
-  def clone[F[_]](url: RepoUrl, folderPath: Path)(implicit F: Sync[F]): F[Repo[F]] = {
-    for {
-      _    <- Executor[F].execute("git", "clone", url, folderPath.toString).foreground
-      repo <- Repo.in(folderPath)
-    } yield repo
-  }
+  def in[F[_]](folderPath: Path)(localFileSystem: LocalFileSystem[F], executor: Executor[F])(implicit F: Sync[F]): F[Repo[F]] = for {
+    stdout <- executor.withWorkingFolder(folderPath).execute("git", "rev-parse", "--is-bare-repository").foreground(Keep.stdout)
+    bare    = stdout.trim == "true"
+  } yield new Repo(folderPath, bare)(localFileSystem, executor)
 
 }
 
-
-
-case class Repo[F[_]](folderPath: Path, bare: Boolean) {
+class Repo[F[_]](folderPath: Path, bare: Boolean)(localFileSystem: LocalFileSystem[F], executor: Executor[F])(implicit F: Sync[F]) {
   self =>
 
-  def linkHook(hookName: HookName, scriptFilePath: Path)(implicit F: Sync[F]): F[Unit] = {
+  def linkHook(hookName: HookName, scriptFilePath: Path): F[Unit] = {
     F.delay(Files.createSymbolicLink(folderPath.resolve("hooks").resolve(hookName), scriptFilePath))
   }
 
-  def add(magnet: AddMagnet[F])(implicit F: Sync[F]): F[Unit] = {
+  def add(magnet: AddMagnet[F]): F[Unit] = {
     magnet.filePathsToAdd(folderPath).flatMap({ filePaths =>
       git(List("add") ++ filePaths.map(_.toString): _*)
     })
   }
 
-  def addRemote(name: RemoteName, uri: Uri)(implicit F: Sync[F]): F[Unit] = {
-    Executor[F](workingFolderPath = Some(folderPath)).execute("git", "remote", "add", name, uri.renderString).foreground.void
+  def addRemote(name: RemoteName, uri: Uri): F[Unit] = {
+    executor.withWorkingFolder(folderPath).execute("git", "remote", "add", name, uri.renderString).foreground.void
   }
 
-  def git(subCommands: String*)(implicit F: Sync[F]): F[Unit] = {
+  def git(subCommands: String*): F[Unit] = {
     val command = "git" +: subCommands
-    Executor[F](workingFolderPath = Some(folderPath)).execute(command: _*).foreground.void
+    executor.withWorkingFolder(folderPath).execute(command: _*).foreground.void
   }
 
-  def updateConfig(key: ConfigKey, value: ConfigValue)(implicit F: Sync[F]): F[Unit] = {
-    val command = if (bare) {
-      Seq("git", "config", "--file", folderPath.resolve("config").toString, key, value)
-    } else ???
-    Executor[F].execute(command: _*).foreground.as(Repo[F](folderPath, bare))
+  def updateConfig(key: ConfigKey, value: ConfigValue): F[Unit] = {
+    executor
+      .withWorkingFolder(folderPath)
+      .execute("git", "config", key, value)
+      .foreground
+      .void
   }
 
-  def updateConfig(config: Config)(implicit F: Sync[F]): F[Unit] = {
+  def updateConfig(config: Config): F[Unit] = {
     val (key, value) = config
     updateConfig(key, value)
   }
 
-  def updateConfig(configs: Config*)(implicit F: Sync[F]): F[Unit] = {
+  def updateConfig(configs: Config*): F[Unit] = {
     configs.toList.traverse[F, Unit](updateConfig).void
   }
 
-  def cloneTo(folderPath: Path)(implicit F: Sync[F]): F[Repo[F]] = {
-    Executor[F].execute("git", "clone", self.folderPath.toString, folderPath.toString).foreground.as(Repo[F](folderPath, false))
+  def cloneTo(folderPath: Path): F[Repo[F]] = {
+    Git(localFileSystem, executor).cloneRepo(self.folderPath.toString, folderPath)
   }
 
-  def fetch(remoteName: RemoteName)(implicit F: Sync[F]): F[Unit] = {
+  def fetch(remoteName: RemoteName): F[Unit] = {
     git("fetch", remoteName)
   }
 
-  def rebase(branchName: BranchName, remoteName: Option[RemoteName] = None)(implicit F: Sync[F]): F[Unit] = {
+  def rebase(branchName: BranchName, remoteName: Option[RemoteName] = None): F[Unit] = {
     git("rebase", remoteName.map(_.concat("/").concat(branchName)).getOrElse(branchName))
   }
 
-  def commit(message: String)(implicit F: Sync[F]): F[Unit] = {
+  def commit(message: String): F[Unit] = {
     git("commit", "-m", message)
   }
 
-  def push(remoteName: RemoteName)(implicit F: Sync[F]): F[Unit] = {
+  def push(remoteName: RemoteName): F[Unit] = {
     git("push", remoteName)
   }
 
-  def pull(remoteName: RemoteName)(implicit F: Sync[F]): F[Unit] = {
+  def pull(remoteName: RemoteName): F[Unit] = {
     git("pull", remoteName)
   }
 
-  def files(implicit F: Sync[F]): F[List[Path]] = {
+  def files: F[List[Path]] = {
     if (bare) {
       F.raiseError(new Exception("Unable to list files of a bare repo"))
     } else {
-      LocalFileSystem[F].listFiles(folderPath).map(_.filter(!_.startsWith(Paths.get(".git"))))
+      localFileSystem.listFiles(folderPath).map(_.filter(!_.startsWith(Paths.get(".git"))))
     }
   }
 
